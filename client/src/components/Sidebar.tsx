@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { orderConversations } from '../../../shared/conversationOrder'
 import type { ApprovalRequest, Conversation, Team } from '../../../shared/types'
 import { conversationAvatars, conversationTitle, formatTime, personFor } from '../people'
 import { lastRead } from '../unread'
@@ -24,15 +25,7 @@ export function Sidebar({ team, conversations, activeId, busy, approvals, readTi
   const [showHidden, setShowHidden] = useState(false)
   const owner = personFor(team, 'user')
   void readTick
-  const rank = (c: Conversation): number => {
-    if (c.pinned) return -2
-    if (c.id === 'group') return -1
-    if (c.kind === 'group') return -0.5
-    const agentId = c.memberIds.find((id) => id !== 'user')
-    const i = team.agents.findIndex((a) => a.id === agentId)
-    return i === -1 ? Number.MAX_SAFE_INTEGER : i
-  }
-  const ordered = [...conversations].sort((a, b) => rank(a) - rank(b) || (b.createdAt ?? 0) - (a.createdAt ?? 0))
+  const ordered = orderConversations(conversations, team)
   const filtered = ordered.filter((c) => conversationTitle(team, c).toLowerCase().includes(q.trim().toLowerCase()))
   const visible = filtered.filter((c) => !c.hidden)
   const hidden = filtered.filter((c) => c.hidden)
