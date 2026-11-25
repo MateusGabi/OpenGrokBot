@@ -38,5 +38,10 @@
     "type": "git",
     "url": "https://github.com/Z4YT0N/OpenGrokBotBot"
   },
-  "homepage": "https://github.com/Z4YT0N/OpenGrokBotBot"
+  "homepage": "https://github.com/Z4YT0N/OpenGrokBotBot",
+  "allowScripts": {
+    "electron@38.8.6": true,
+    "esbuild@0.28.2": true,
+    "esbuild@0.25.12": true
+  }
 }
