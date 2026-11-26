@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Offices</title>
+  <link rel="stylesheet" href="offices.css">
+</head>
+<body>
+  <main>
+    <h1>Offices</h1>
+    <ul id="list" aria-label="Offices"></ul>
+    <form id="new">
+      <label for="name">New office</label>
+      <div class="field">
+        <input id="name" name="name" maxlength="60" placeholder="Name" autocomplete="off" required>
+        <button type="submit">Create</button>
+      </div>
+    </form>
+    <p id="status" role="status" aria-live="polite"></p>
+  </main>
+  <script src="offices.cjs" defer></script>
+</body>
+</html>
