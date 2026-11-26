@@ -47,6 +47,8 @@
     "files": [
       "dist/**/*",
       "desktop/**/*",
+      "shared/offices.cjs",
+      "scripts/office.cjs",
       "package.json",
       "team.example.json"
     ],
