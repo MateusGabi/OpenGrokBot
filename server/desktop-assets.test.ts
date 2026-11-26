@@ -37,5 +37,17 @@ test('offices manager screen is self-contained and offline', () => {
 
 test('manager asks for a name when adding an existing office', () => {
   const renderer = readFileSync(path.join(root, 'desktop', 'offices.cjs'), 'utf8')
-  assert.match(renderer, /offices\.add\(dir\.trim\(\), name\)/)
+  assert.match(renderer, /\.add\(dir\.trim\(\), name\)/)
+})
+
+test('manager puts a focused new-office form above the list', () => {
+  const html = readFileSync(path.join(root, 'desktop', 'offices.html'), 'utf8')
+  const renderer = readFileSync(path.join(root, 'desktop', 'offices.cjs'), 'utf8')
+  const css = readFileSync(path.join(root, 'desktop', 'offices.css'), 'utf8')
+  assert.ok(html.indexOf('id="new"') < html.indexOf('id="list"'), 'create form must come before the office list')
+  assert.match(html, /Create office/)
+  assert.match(html, /data-theme="light"/)
+  assert.match(css, /\[data-theme='light'\]/)
+  assert.match(renderer, /input\.focus\(\)/)
+  assert.match(renderer, /Escape/)
 })

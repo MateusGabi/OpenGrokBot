@@ -1,25 +1,44 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#fafafa">
   <title>Offices</title>
   <link rel="stylesheet" href="offices.css">
 </head>
 <body>
-  <main>
-    <h1>Offices</h1>
-    <ul id="list" aria-label="Offices"></ul>
-    <form id="new">
-      <label for="name">New office</label>
-      <div class="field">
-        <input id="name" name="name" maxlength="60" placeholder="Name" autocomplete="off" required>
-        <button type="submit">Create</button>
+  <div class="backdrop">
+    <section class="panel" role="dialog" aria-label="Offices">
+      <header class="panel-head">
+        <div>
+          <h1>Offices</h1>
+          <p id="count" class="muted"></p>
+        </div>
+        <div class="head-actions">
+          <button id="theme" class="icon-button" type="button" title="Toggle theme" aria-label="Toggle theme">◐</button>
+          <button id="close" class="icon-button" type="button" title="Close (Esc)" aria-label="Close">×</button>
+        </div>
+      </header>
+
+      <form id="new" class="create" autocomplete="off">
+        <label for="name">New office</label>
+        <div class="create-row">
+          <input id="name" name="name" maxlength="60" placeholder="Name your new office…" aria-label="New office name" required>
+          <button type="submit" class="primary">Create office</button>
+        </div>
+        <p class="hint">Enter to create · each office gets its own team, data and port</p>
+      </form>
+
+      <h2 class="section">Your offices</h2>
+      <ul id="list" class="palette-list" aria-label="Your offices"></ul>
+      <div class="panel-foot">
+        <button id="add" class="text-button" type="button">Add an existing folder…</button>
       </div>
-    </form>
-    <p id="status" role="status" aria-live="polite"></p>
-  </main>
+      <p id="status" role="status" aria-live="polite"></p>
+    </section>
+  </div>
   <script src="offices.cjs" defer></script>
 </body>
 </html>
