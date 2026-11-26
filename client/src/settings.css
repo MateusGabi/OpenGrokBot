@@ -14,14 +14,14 @@
   gap: 6px;
   padding: 7px 14px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--fill);
   font-size: 13.5px;
   font-weight: 600;
   transition: background 0.12s, opacity 0.12s;
 }
 
 .btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--fill-strong);
 }
 
 .btn:disabled {
@@ -30,12 +30,12 @@
 }
 
 .btn-primary {
-  background: #fff;
-  color: #111;
+  background: var(--solid);
+  color: var(--on-solid);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #e8e8e8;
+  background: var(--solid-hover);
 }
 
 .btn-pill {
@@ -45,12 +45,12 @@
 
 .btn-danger {
   background: var(--danger);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .btn-danger-ghost {
   color: var(--danger);
-  background: rgba(255, 92, 92, 0.1);
+  background: var(--danger-soft);
 }
 
 .chat-usage {
@@ -155,7 +155,7 @@
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 6px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-menu);
 }
 
 .menu-item {
@@ -297,7 +297,7 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: rgba(255, 255, 255, 0.22);
+  border-color: var(--border-strong);
 }
 
 textarea {
@@ -329,7 +329,7 @@ select {
 }
 
 .swatch.is-active {
-  border-color: #fff;
+  border-color: var(--solid);
   transform: scale(1.15);
 }
 
@@ -340,7 +340,7 @@ select {
 }
 
 .shape.is-active {
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: var(--border-active);
   background: var(--bg-elevated);
 }
 
@@ -363,7 +363,7 @@ select {
 }
 
 .segmented button.is-active {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--fill-strong);
   color: var(--text);
 }
 
@@ -382,7 +382,7 @@ select {
 }
 
 .check input {
-  accent-color: #fff;
+  accent-color: var(--solid);
   width: 16px;
   height: 16px;
 }
@@ -413,7 +413,7 @@ select {
   width: 40px;
   height: 24px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--toggle-off);
   position: relative;
   cursor: pointer;
   flex-shrink: 0;
@@ -428,7 +428,7 @@ select {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--solid);
   transition: transform 0.15s;
 }
 
@@ -441,9 +441,9 @@ select {
 }
 
 .form-error {
-  background: rgba(255, 92, 92, 0.12);
-  border: 1px solid rgba(255, 92, 92, 0.3);
-  color: #ffb4b4;
+  background: var(--danger-soft-strong);
+  border: 1px solid var(--danger-border-soft);
+  color: var(--danger-text);
   padding: 10px 12px;
   border-radius: 10px;
   font-size: 13px;
@@ -463,7 +463,7 @@ select {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--backdrop);
   z-index: 40;
   display: grid;
   place-items: center;
@@ -478,7 +478,7 @@ select {
   background: var(--bg-sidebar);
   border: 1px solid var(--border);
   border-radius: 18px;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow-modal);
   animation: rise 0.18s ease-out;
 }
 
@@ -581,7 +581,7 @@ select {
 }
 
 .row-button:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--fill-hover);
 }
 
 .row-text {
@@ -722,7 +722,7 @@ select {
 .bar {
   height: 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--fill);
   overflow: hidden;
 }
 
@@ -734,7 +734,7 @@ select {
 }
 
 .bar.is-warn .bar-fill {
-  background: #f59e0b;
+  background: var(--warning);
 }
 
 .bar.is-danger .bar-fill {
@@ -774,8 +774,8 @@ select {
 }
 
 .chip.is-active {
-  background: #fff;
-  color: #111;
+  background: var(--solid);
+  color: var(--on-solid);
   font-weight: 600;
 }
 
@@ -800,7 +800,7 @@ select {
   display: grid;
   place-items: center;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--fill-hover);
   font-size: 22px;
   flex-shrink: 0;
 }
@@ -853,7 +853,7 @@ select {
 }
 
 .status-dot.ok {
-  background: #22c55e;
+  background: var(--success);
 }
 
 .status-dot.bad {
@@ -861,7 +861,7 @@ select {
 }
 
 .field small .ok {
-  color: #22c55e;
+  color: var(--success);
 }
 
 .field small .bad {
@@ -888,7 +888,7 @@ select {
 }
 
 .member-pick.is-active {
-  border-color: rgba(255, 255, 255, 0.35);
+  border-color: var(--border-active);
   background: var(--bg-active);
 }
 
@@ -912,9 +912,9 @@ select {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #3a1d1d;
-  border: 1px solid rgba(255, 92, 92, 0.4);
-  color: #ffb4b4;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border-strong);
+  color: var(--danger-text);
   padding: 8px 14px;
   border-radius: 12px;
   font-size: 13px;
@@ -934,9 +934,9 @@ select {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(47, 126, 245, 0.16);
-  color: #9cc4ff;
-  border: 1px solid rgba(47, 126, 245, 0.35);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  border: 1px solid var(--accent-border);
   border-radius: 8px;
   padding: 2px 9px 2px 7px;
   font-family: var(--mono);
@@ -947,7 +947,7 @@ select {
 }
 
 .file-chip:hover {
-  background: rgba(47, 126, 245, 0.28);
+  background: var(--accent-soft-hover);
 }
 
 .file-chip-icon {
