@@ -1,5 +1,5 @@
 // Electron shell: starts the office server as a child Node process and opens it in a window.
-const { app, BrowserWindow, shell } = require('electron')
+const { app, BrowserWindow, shell, ipcMain } = require('electron')
 const { spawn } = require('node:child_process')
 const { mkdirSync } = require('node:fs')
 const path = require('node:path')
@@ -52,9 +52,17 @@ async function createWindow() {
     title: 'OpenGrokBot',
     autoHideMenuBar: true,
     titleBarStyle: 'hidden',
-    titleBarOverlay: { color: '#141414', symbolColor: '#8f8f8f', height: 40 },
-    webPreferences: { contextIsolation: true, sandbox: true },
+    // No titleBarOverlay: its native buttons sat on top of the web content and
+    // covered the custom chat header. The header itself is the drag handle and
+    // draws its own controls, wired up through the preload bridge below.
+    webPreferences: { contextIsolation: true, sandbox: true, preload: path.join(__dirname, 'preload.cjs') },
   })
+  ipcMain.handle('window:minimize', () => win.minimize())
+  ipcMain.handle('window:toggle-maximize', () => (win.isMaximized() ? win.restore() : win.maximize()))
+  ipcMain.handle('window:close', () => win.close())
+  ipcMain.handle('window:is-maximized', () => win.isMaximized())
+  win.on('maximize', () => win.webContents.send('window:maximized-change', true))
+  win.on('unmaximize', () => win.webContents.send('window:maximized-change', false))
   win.webContents.setWindowOpenHandler(({ url }) => {
     void shell.openExternal(url)
     return { action: 'deny' }

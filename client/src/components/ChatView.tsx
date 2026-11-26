@@ -43,6 +43,31 @@ function personOf(team: Team, id: string): Person {
   return personFor(team, id)
 }
 
+/** Native window controls are hidden, so the header draws its own in Electron. */
+function WindowControls() {
+  const api = window.desktop
+  const [maximized, setMaximized] = useState(false)
+  useEffect(() => {
+    if (!api) return
+    void api.isMaximized().then(setMaximized)
+    return api.onMaximizedChange(setMaximized)
+  }, [api])
+  if (!api) return null
+  return (
+    <div className="window-controls">
+      <button type="button" className="window-control" aria-label="Minimize" title="Minimize" onClick={() => void api.minimize()}>
+        <MinimizeIcon />
+      </button>
+      <button type="button" className="window-control" aria-label={maximized ? 'Restore' : 'Maximize'} title={maximized ? 'Restore' : 'Maximize'} onClick={() => void api.toggleMaximize()}>
+        {maximized ? <RestoreIcon /> : <MaximizeIcon />}
+      </button>
+      <button type="button" className="window-control is-close" aria-label="Close" title="Close" onClick={() => void api.close()}>
+        <CloseIcon />
+      </button>
+    </div>
+  )
+}
+
 export function ChatView({ team, conversation, typing, usage, approvals, jumpTo, onEditAgent, onReply, profileOpen }: ChatViewProps) {
   const scroller = useRef<HTMLDivElement | null>(null)
   const pinned = useRef(true)
@@ -100,6 +125,7 @@ export function ChatView({ team, conversation, typing, usage, approvals, jumpTo,
         <button type="button" className={`icon-button${panel ? ' is-active' : ''}`} onClick={() => setShowInfo((v) => !v)} aria-label={panel ? 'Hide members' : 'Show members'}>
           {panel ? <ChevronsIcon /> : <InfoIcon />}
         </button>
+        <WindowControls />
       </header>
       <div className="chat-body">
         <div className="chat-scroll" ref={scroller} onScroll={onScroll}>
@@ -250,6 +276,39 @@ function ToolIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
       <path d="M4 6l6 4-6 4M11 15h5" />
+    </svg>
+  )
+}
+
+function MinimizeIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+      <path d="M3 8h10" />
+    </svg>
+  )
+}
+
+function MaximizeIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
+      <rect x="3" y="3" width="10" height="10" rx="1.5" />
+    </svg>
+  )
+}
+
+function RestoreIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round">
+      <rect x="5.5" y="2.5" width="8" height="8" rx="1.5" />
+      <path d="M10.5 13.5h-7a1 1 0 0 1-1-1v-7" />
+    </svg>
+  )
+}
+
+function CloseIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+      <path d="M4 4l8 8M12 4l-8 8" />
     </svg>
   )
 }

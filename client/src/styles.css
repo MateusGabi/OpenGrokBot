@@ -482,6 +482,35 @@ textarea {
   border-bottom: 1px solid var(--border);
 }
 
+/* Electron-only window controls (the native title bar is hidden). */
+.window-controls {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 2px;
+  margin-right: -8px;
+}
+
+.window-control {
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--text-muted);
+  transition: background 0.15s, color 0.15s;
+}
+
+.window-control:hover {
+  background: var(--fill);
+  color: var(--text);
+}
+
+.window-control.is-close:hover {
+  background: var(--danger);
+  color: var(--on-accent);
+}
+
 .chat-title {
   flex: 1;
   margin: 0;
