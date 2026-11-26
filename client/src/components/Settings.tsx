@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { formatArgs, parseArgs } from '../../../shared/args'
 import { RATE_LIMIT_LABELS } from '../../../shared/catalog'
 import type { AccountStatus, AutoReviewRule, Conversation, McpServerDef, Routine, Team, TeamSettings, UsageSummary, UsageTotals } from '../../../shared/types'
 import { deleteMcpServer, putMcpServer, putSettings, refreshAccount } from '../api'
@@ -251,7 +252,7 @@ function Marketplace({ team }: SettingsProps) {
         </button>
       </div>
       <p className="lead">
-        MCP servers give employees new abilities: GitHub, a browser, databases, Notion… They run locally on this computer through Claude Code. After adding one, enable it per employee in their profile.
+        MCP servers give employees new abilities: GitHub, a browser, databases, Notion… They run locally on this computer. After adding one, enable it per employee in their profile — the employee must use a Claude or “Opencode + MCP” provider (add one in Settings → Providers if needed).
       </p>
       {installed.length > 0 && (
         <>
@@ -310,7 +311,7 @@ function AddServer({ item, onDone }: { item: MarketplaceItem | null; onDone: () 
   const [name, setName] = useState(item?.id ?? '')
   const [type, setType] = useState<McpServerDef['type']>(item?.def.type ?? 'stdio')
   const [command, setCommand] = useState(item?.def.type === 'stdio' ? item.def.command : 'npx')
-  const [args, setArgs] = useState(item?.def.type === 'stdio' ? (item.def.args ?? []).join(' ') : '')
+  const [args, setArgs] = useState(item?.def.type === 'stdio' ? formatArgs(item.def.args ?? []) : '')
   const [url, setUrl] = useState(item && item.def.type !== 'stdio' ? item.def.url : '')
   const [secrets, setSecrets] = useState<Record<string, string>>({})
   const [envText, setEnvText] = useState('')
@@ -329,7 +330,7 @@ function AddServer({ item, onDone }: { item: MarketplaceItem | null; onDone: () 
       for (const s of item?.secrets ?? []) if (!env[s.key]) throw new Error(`${s.label} is required.`)
       const def: McpServerDef =
         type === 'stdio'
-          ? { type: 'stdio', command: command.trim(), ...(args.trim() ? { args: args.trim().split(/\s+/) } : {}), ...(Object.keys(env).length ? { env } : {}) }
+          ? { type: 'stdio', command: command.trim(), ...(args.trim() ? { args: parseArgs(args) } : {}), ...(Object.keys(env).length ? { env } : {}) }
           : { type, url: url.trim(), ...(Object.keys(env).length ? { headers: env } : {}) }
       await putMcpServer(name.trim(), def)
       onDone()
@@ -368,6 +369,7 @@ function AddServer({ item, onDone }: { item: MarketplaceItem | null; onDone: () 
               <span>Arguments</span>
               <input value={args} onChange={(e) => setArgs(e.target.value)} />
               {item?.argHint && <small>{item.argHint}</small>}
+              <small>Quote arguments that contain spaces, e.g. "C:\My Projects".</small>
             </label>
           </>
         ) : (

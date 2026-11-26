@@ -135,8 +135,8 @@ OpenGrokBot هو بديل مجاني ومفتوح المصدر لـ Grok Bot (ب
 - **General:** company, your name, workspace, group reply mode (smart routing / everyone / mentions only), reply language (auto / Egyptian Arabic / English), notifications, round caps, auto-review rules.
 - **Routines** and **Skills:** see above.
 - **Team:** every employee; click to edit name, role, label, color, shape, provider, model, effort, personality, tools, permissions, working folder, MCP servers, auto-approve, mute.
-- **Providers:** status of each CLI login, API keys, and any number of OpenAI-compatible providers with presets (Kimi, xAI, OpenRouter, DeepSeek, Groq, OpenAI, Mistral, Ollama).
-- **Marketplace:** one-click MCP servers or a custom stdio/HTTP/SSE server.
+- **Providers:** status of each CLI login, API keys, and any number of OpenAI-compatible providers with presets (Kimi, xAI, OpenRouter, DeepSeek, Groq, OpenAI, Mistral, Ollama, Opencode + MCP). To use marketplace MCPs, pick the **Opencode + MCP** provider type for an employee — plain API providers ignore MCP servers.
+- **Marketplace:** one-click MCP servers or a custom stdio/HTTP/SSE server. Adding a server is only half of it: open the employee's profile and tick the server under **MCP servers** (available for Claude and Opencode + MCP providers).
 - **Usage:** totals, by employee, by conversation, by model.
 - **Claude account:** login type, Claude Code version, limit windows, refresh.
 
@@ -191,6 +191,17 @@ team.example.json  The starter company
 ```
 
 `npm run dev` for hot reload (server :4310, client :5180). `npm test` for the unit tests.
+
+## Versioning
+
+Versions follow SemVer and are cut with [Gabber](https://github.com/MateusGabi/Gabber) (its `semver.sh` is vendored in `scripts/`). Preview the next number or create a local tag:
+
+```bash
+npm run gabber -- --next=minor
+npm run gabber -- --generate=minor
+```
+
+Use `major`, `minor` or `patch`, optionally with `--verbose`, `--sha`, `--date` or `--build-number`. `--generate` only creates the tag locally — publish it with `git push origin --tags`.
 
 ## Contributing
 

@@ -103,11 +103,11 @@ export function parseMcpServer(raw: unknown, label = 'mcp server'): McpServerDef
 export function parseProvider(raw: unknown, label = 'provider'): ProviderDef {
   const r = asRecord(raw)
   const kind = asString(r.kind, `${label}.kind`)
-  if (!PROVIDER_KINDS.has(kind)) fail(`${label}.kind must be claude, codex, gemini or openai`)
+  if (!PROVIDER_KINDS.has(kind)) fail(`${label}.kind must be claude, codex, gemini, openai or opencode`)
   const def: ProviderDef = { kind: kind as ProviderDef['kind'], label: typeof r.label === 'string' && r.label.trim() ? r.label.trim() : kind }
   if (typeof r.apiKey === 'string' && r.apiKey.trim()) def.apiKey = r.apiKey.trim()
   if (typeof r.baseUrl === 'string' && r.baseUrl.trim()) def.baseUrl = r.baseUrl.trim().replace(/\/+$/, '')
-  if (kind === 'openai' && !def.baseUrl) fail(`${label}.baseUrl is required for an API provider`)
+  if ((kind === 'openai' || kind === 'opencode') && !def.baseUrl) fail(`${label}.baseUrl is required for an API provider`)
   const models = asStringList(r.models)
   if (models.length > 0) def.models = models
   return def
