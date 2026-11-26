@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import path from 'node:path'
+import type { OAuthAccess } from '../oauth.js'
 import { parseTeam } from '../team.js'
 import { openMcpServers } from './mcp.js'
 
@@ -64,6 +65,19 @@ test('a server that fails to start is reported and skipped', async () => {
   try {
     assert.deepEqual(bundle.tools, [])
     assert.ok(notices.some((n) => n.startsWith('MCP broken:')))
+  } finally {
+    await bundle.close()
+  }
+})
+
+test('MCP sem autorização OAuth é ignorado com aviso em turno de funcionário', async () => {
+  const team = teamWith('fake')
+  const notices: string[] = []
+  const oauth: OAuthAccess = { status: () => 'configured', accessToken: async () => undefined, authProvider: () => undefined }
+  const bundle = await openMcpServers(team, team.agents[0]!, (line) => notices.push(line), oauth)
+  try {
+    assert.deepEqual(bundle.tools, [])
+    assert.ok(notices.some((n) => n.includes('not authorized') && n.includes('fake')))
   } finally {
     await bundle.close()
   }
