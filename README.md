@@ -151,7 +151,8 @@ Everything the UI edits lives here. Safe to edit by hand; restart afterwards.
 | `agents[].provider` | Key into `providers` (`claude`, `codex`, `gemini`, or one you added). |
 | `agents[].model`, `effort` | Model id for that provider (`default` = the CLI's own default) and `low` … `max`. |
 | `agents[].tools`, `permissionMode`, `cwd`, `autoApproveTools` | What the employee may do and where. |
-| `agents[].mcpServers`, `inheritClaudeSettings` | Claude only: team MCP servers to enable, and whether to load your `~/.claude` setup. |
+| `agents[].mcpServers` | Team MCP servers to enable. Works on `claude` and on providers with `kind: 'opencode'` (e.g. the `opencode2` example). |
+| `agents[].inheritClaudeSettings` | Claude only: whether to load your `~/.claude` setup. |
 | `agents[].muted` | Only speaks in groups when mentioned. |
 | `providers` | `{ kind, label, apiKey?, baseUrl?, models? }`. Built-ins `claude`, `codex`, `gemini` always exist. |
 | `agents[].scope` | One line of what they own; drives smart routing and stay-in-lane behavior. |
