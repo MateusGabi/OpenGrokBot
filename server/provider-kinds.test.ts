@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { MODEL_SUGGESTIONS, PROVIDER_KINDS } from '../shared/catalog.js'
+import { MODEL_SUGGESTIONS, PROVIDER_KINDS, TOOLS } from '../shared/catalog.js'
 import { parseTeam } from './team.js'
 
 test('opencode is a valid provider kind', () => {
@@ -12,4 +12,10 @@ test('opencode is a valid provider kind', () => {
     agents: [], skills: {}, settings: {},
   }, '.')
   assert.equal(team.providers.opencode2?.kind, 'opencode')
+})
+
+test('opencode agent can configure the local tools the provider actually runs', () => {
+  assert.deepEqual(TOOLS.filter((t) => t.kinds.includes('opencode')).map((t) => t.id), [
+    'Read', 'Glob', 'Grep', 'Edit', 'Write', 'Bash', 'WebFetch',
+  ])
 })
