@@ -30,3 +30,10 @@ test('package is configured to build a Windows installer', () => {
   assert.match(pkg.devDependencies?.['electron-builder'] ?? '', /^\^?26/)
   assert.match(gitignore, /^release\/$/m)
 })
+
+test('offices manager is packaged with the desktop app', () => {
+  assert.ok(pkg.build?.files?.includes('shared/offices.cjs'), 'registry must be inside app.asar')
+  assert.ok(pkg.build?.files?.includes('scripts/office.cjs'), 'CLI must be inside the package')
+  assert.ok(pkg.build?.files?.includes('desktop/**/*'), 'manager screen must be inside app.asar')
+  assert.equal(pkg.scripts?.office, 'node scripts/office.cjs')
+})

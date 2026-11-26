@@ -26,3 +26,29 @@ test('electron shell surfaces spawn errors instead of only timing out', () => {
   assert.match(source, /server\.on\('error'/)
   assert.match(source, /childOptions\(/)
 })
+
+test('electron shell manages one server per office', () => {
+  const source = readFileSync(path.join(root, 'desktop/main.cjs'), 'utf8')
+  assert.match(source, /loadOffices\(/)
+  assert.match(source, /startupId\(/)
+  assert.match(source, /offices-preload\.cjs/)
+  assert.match(source, /setApplicationMenu\(/)
+  assert.match(source, /page-title-updated/)
+})
+
+test('bulk shutdown keeps lastId and remove validates before teardown', () => {
+  const source = readFileSync(path.join(root, 'desktop/main.cjs'), 'utf8')
+  assert.match(source, /function stopOffice\(id, closeWindow = true, resetLastId = true\)/)
+  assert.match(source, /if \(resetLastId && registry\.lastId === id\)/)
+  assert.match(source, /stopOffice\(id, true, true\)/)
+  assert.match(source, /stopOffice\(id, false, false\)/)
+  const handler = source.slice(source.indexOf("handle('remove'"))
+  assert.ok(handler.indexOf('registryLib.removeOffice(') >= 0)
+  assert.ok(handler.indexOf('registryLib.removeOffice(') < handler.indexOf('stopOffice('))
+})
+
+test('startup and open failures are shown to the user', () => {
+  const source = readFileSync(path.join(root, 'desktop/main.cjs'), 'utf8')
+  assert.match(source, /dialog\.showErrorBox\('OpenGrokBot', err instanceof Error/)
+  assert.match(source, /registryLib\.assertOfficeDir\(office\)/)
+})

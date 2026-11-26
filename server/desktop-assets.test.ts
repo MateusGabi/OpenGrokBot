@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 
 const root = process.cwd()
@@ -19,4 +19,23 @@ test('desktop icon assets exist and are usable', () => {
   const html = readFileSync(path.join(root, 'client/index.html'), 'utf8')
   assert.match(html, /href="\/icon\.svg"/)
   assert.ok(!html.includes('data:image/svg+xml'), 'inline orange favicon must be gone')
+})
+
+test('offices manager screen is self-contained and offline', () => {
+  for (const file of ['offices.html', 'offices.css', 'offices.cjs', 'offices-preload.cjs']) {
+    assert.ok(existsSync(path.join(root, 'desktop', file)), `desktop/${file} must exist`)
+  }
+  const html = readFileSync(path.join(root, 'desktop', 'offices.html'), 'utf8')
+  const css = readFileSync(path.join(root, 'desktop', 'offices.css'), 'utf8')
+  const preload = readFileSync(path.join(root, 'desktop', 'offices-preload.cjs'), 'utf8')
+  assert.doesNotMatch(html + css, /https?:\/\//)
+  assert.doesNotMatch(html + css, /@import/)
+  for (const name of ['list', 'create', 'add', 'open', 'rename', 'remove', 'close']) {
+    assert.match(preload, new RegExp(name))
+  }
+})
+
+test('manager asks for a name when adding an existing office', () => {
+  const renderer = readFileSync(path.join(root, 'desktop', 'offices.cjs'), 'utf8')
+  assert.match(renderer, /offices\.add\(dir\.trim\(\), name\)/)
 })

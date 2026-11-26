@@ -170,13 +170,32 @@ Everything the UI edits lives here. Safe to edit by hand; restart afterwards.
 
 Conversations are JSON files under `data/conversations/`; routines in `data/routines.json`; memory in `data/memory/<employee>.md`; uploads in `data/uploads/`.
 
-## Run a second, separate office (demos, tests)
+## Multiple offices / workspaces
+
+An **office** is one isolated company: its own team (employees, providers, API keys), its own conversations/memory/uploads, its own workspace folder, and its own server process and port. One office never reads another office's data.
+
+Your existing install is the `default` office — `team.json` and `data/` stay exactly where they are. Add more with the CLI:
 
 ```bash
-PORT=4399 OPENGROKBOT_TEAM=demo-team.json OPENGROKBOT_DATA=demo-data npm start
+npm run office -- list                        # id, name, port, directory
+npm run office -- create "Client ACME"        # new team.json + data/, free port
+npm run office -- open client-acme            # start its server on its own port
+npm run office -- rename client-acme "ACME"
+npm run office -- remove client-acme          # removes from the list, keeps files
+npm run office -- add ./old-office "Old"      # register an existing folder again
 ```
 
-Different team file, different data folder, same install. The screenshots above were taken in one.
+In the desktop app, press **Ctrl+Shift+O** (or the app menu → **Offices…**) for the minimal manager screen: open, create, rename or remove offices from one column. Each office gets its own window, titled with its name. Closing a window stops only that office's server.
+
+Offices live under the app's state folder:
+
+```
+offices.json               # registry: id, name, dir, port
+offices/<id>/team.json     # that office's company
+offices/<id>/data/         # conversations, memory, uploads, routines
+```
+
+`remove` only unregisters an office; use `npm run office -- remove <id> --delete-data` (or the second confirmation in the manager) to delete its files permanently. The old manual way still works too — `PORT=4399 OPENGROKBOT_TEAM=demo-team.json OPENGROKBOT_DATA=demo-data npm start` runs a second office without registering it.
 
 ## Use it from your phone
 
