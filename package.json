@@ -1,6 +1,6 @@
 {
   "name": "opengrokbot",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
   "description": "Your own AI company in a group chat: employees with personas that talk to you and to each other, running on the subscriptions you already pay for (Claude, Codex, Gemini) or any API (Kimi, OpenRouter, Ollama…). Grok Bot, but open and yours.",
