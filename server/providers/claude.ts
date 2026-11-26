@@ -1,6 +1,7 @@
 import { query } from '@anthropic-ai/claude-agent-sdk'
 import type { McpServerConfig, Options } from '@anthropic-ai/claude-agent-sdk'
 import { needsApproval } from '../approvals.js'
+import type { OAuthAccess } from '../oauth.js'
 import { buildSystemPrompt, buildTurnPrompt, stripSkip } from '../prompt.js'
 import type { TurnHandlers } from './types.js'
 import type { RunTurnParams, TurnResult } from './types.js'
@@ -45,7 +46,7 @@ function envFor(provider: ProviderDef): Record<string, string> {
   return env
 }
 
-function mcpServersFor(team: Team, agent: Agent): Record<string, McpServerConfig> {
+async function mcpServersFor(team: Team, agent: Agent, oauth?: OAuthAccess): Promise<Record<string, McpServerConfig>> {
   const out: Record<string, McpServerConfig> = {}
   for (const name of agent.mcpServers) {
     const def = team.mcpServers[name]
@@ -53,14 +54,15 @@ function mcpServersFor(team: Team, agent: Agent): Record<string, McpServerConfig
     if (def.type === 'stdio') {
       out[name] = { type: 'stdio', command: def.command, ...(def.args ? { args: def.args } : {}), env: { ...process.env, ...(def.env ?? {}) } as Record<string, string> }
     } else {
-      out[name] = { type: def.type, url: def.url, ...(def.headers ? { headers: def.headers } : {}) }
+      const token = await oauth?.accessToken(name)
+      out[name] = { type: def.type, url: def.url, ...(def.headers || token ? { headers: { ...(def.headers ?? {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) } } : {}) }
     }
   }
   return out
 }
 
-export function buildQueryOptions(team: Team, conversation: Conversation, agent: Agent, provider: ProviderDef, sessionId: string | undefined, abort: AbortController, handlers?: TurnHandlers, notes = ''): Options {
-  const mcpServers = mcpServersFor(team, agent)
+export async function buildQueryOptions(team: Team, conversation: Conversation, agent: Agent, provider: ProviderDef, sessionId: string | undefined, abort: AbortController, handlers?: TurnHandlers, notes = '', oauth?: OAuthAccess): Promise<Options> {
+  const mcpServers = await mcpServersFor(team, agent, oauth)
   const asks = agent.approvals !== 'auto' && !agent.autoApproveTools && handlers?.onToolPermission !== undefined
   // Tools that must stop for approval are left out of allowedTools so Claude Code calls canUseTool for them.
   const allowedTools = asks
@@ -98,14 +100,14 @@ export function buildQueryOptions(team: Team, conversation: Conversation, agent:
 }
 
 export async function runClaudeTurn(params: RunTurnParams): Promise<TurnResult> {
-  const { team, conversation, agent, provider, sessionId, signal, handlers, note, notes } = params
+  const { team, conversation, agent, provider, sessionId, signal, handlers, note, notes, oauth } = params
   const abort = new AbortController()
   const onAbort = (): void => abort.abort()
   if (signal.aborted) abort.abort()
   else signal.addEventListener('abort', onAbort, { once: true })
 
   const prompt = buildTurnPrompt(team, conversation, agent, sessionId !== undefined, note)
-  const q = query({ prompt, options: buildQueryOptions(team, conversation, agent, provider, sessionId, abort, handlers, notes ?? '') })
+  const q = query({ prompt, options: await buildQueryOptions(team, conversation, agent, provider, sessionId, abort, handlers, notes ?? '', oauth) })
 
   let text = ''
   let resultText = ''

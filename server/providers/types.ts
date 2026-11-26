@@ -1,4 +1,5 @@
 import type { RateLimitReport } from '../account.js'
+import type { OAuthAccess } from '../oauth.js'
 import type { Agent, Conversation, MessageUsage, ProviderDef, Team } from '../../shared/types.js'
 
 export interface TurnHandlers {
@@ -30,6 +31,8 @@ export interface RunTurnParams {
   note?: string
   /** The employee's long-term notes, injected into the system prompt. */
   notes?: string
+  /** Server-side OAuth credentials for MCP servers (Google Drive). */
+  oauth?: OAuthAccess
 }
 
 export type ProviderRunner = (params: RunTurnParams) => Promise<TurnResult>

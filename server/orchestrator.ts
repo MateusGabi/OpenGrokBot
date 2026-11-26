@@ -6,6 +6,7 @@ import { emit } from './events.js'
 import { collectAttachments } from './files.js'
 import type { Memory } from './memory.js'
 import { findMentions } from './mentions.js'
+import type { OAuthAccess } from './oauth.js'
 import { routeSpeakers, type RouteMode } from './router.js'
 import type { Store } from './store.js'
 import { summarizeUsage } from './usage.js'
@@ -67,6 +68,7 @@ export class Orchestrator {
     private readonly memory: Memory,
     /** Whether a file path may be shown in the chat (inside the workspace, an employee folder, or uploads). */
     private readonly allowedFile: (p: string) => boolean,
+    private readonly oauth?: OAuthAccess,
   ) {}
 
   isBusy(conversationId: string): boolean {
@@ -159,6 +161,7 @@ export class Orchestrator {
       provider: team.providers.claude ?? FALLBACK_PROVIDER,
       sessionId: undefined,
       signal: new AbortController().signal,
+      ...(this.oauth ? { oauth: this.oauth } : {}),
       handlers: {
         onDelta: () => {},
         onActivity: () => {},
@@ -298,6 +301,7 @@ export class Orchestrator {
       signal,
       notes,
       ...(note ? { note } : {}),
+      ...(this.oauth ? { oauth: this.oauth } : {}),
       handlers: {
         onDelta: (delta) => {
           start()

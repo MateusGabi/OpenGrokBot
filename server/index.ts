@@ -47,7 +47,7 @@ store.seed(team)
 const account = new Account(path.join(dataDir, 'account.json'))
 const approvals = new Approvals()
 const memory = new Memory(dataDir)
-const orchestrator = new Orchestrator(() => team, store, account, approvals, memory, (p) => allowedFile(p))
+const orchestrator = new Orchestrator(() => team, store, account, approvals, memory, (p) => allowedFile(p), oauth)
 const routines = new Routines(dataDir, (r) => orchestrator.runRoutine(r))
 routines.start()
 
