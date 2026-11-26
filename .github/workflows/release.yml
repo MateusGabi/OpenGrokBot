@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - id: bump
+        run: node scripts/release-bump.mjs >> "$GITHUB_OUTPUT"
+      - name: Sync manifests
+        if: steps.bump.outputs.version != ''
+        run: |
+          VERSION="${{ steps.bump.outputs.version }}"
+          CURRENT=$(node -p "require('./package.json').version")
+          if [ "$CURRENT" != "$VERSION" ]; then
+            npm version "$VERSION" --no-git-tag-version
+          fi
+      - name: Commit and tag
+        if: steps.bump.outputs.version != ''
+        run: |
+          VERSION="${{ steps.bump.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(release): v$VERSION"
+          fi
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin HEAD:main --follow-tags
+
+  installer:
+    needs: version
+    if: needs.version.outputs.version != ''
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.version.outputs.version }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - run: npm run build:desktop
+      - name: Publish release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "v${{ needs.version.outputs.version }}" release/* --title "v${{ needs.version.outputs.version }}" --generate-notes

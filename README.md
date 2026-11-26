@@ -202,14 +202,28 @@ team.example.json  The starter company
 
 ## Versioning
 
-Versions follow SemVer and are cut with [Gabber](https://github.com/MateusGabi/Gabber) (its `semver.sh` is vendored in `scripts/`). Preview the next number or create a local tag:
+Releases are cut automatically on every merge into `main`. The last `vX.Y.Z` tag is the
+source of truth; the workflow reads Conventional Commit subjects since that tag:
+
+| Commit subject | Bump |
+|---|---|
+| `BREAKING CHANGE:` or `feat!:` | major |
+| `feat:` | minor |
+| `fix:` | patch |
+| `docs:`, `chore:`, `refactor:` only | no release |
+
+It syncs `package.json` and `package-lock.json`, tags the result and publishes a GitHub
+Release with the Windows installer (`OpenGrokBot Setup <version>.exe`), `latest.yml` and
+the block map. Release commits (`chore(release): …`) do not trigger another release.
+
+Preview the next number locally with [Gabber](https://github.com/MateusGabi/Gabber)
+(its `semver.sh` is vendored in `scripts/`):
 
 ```bash
 npm run gabber -- --next=minor
-npm run gabber -- --generate=minor
 ```
 
-Use `major`, `minor` or `patch`, optionally with `--verbose`, `--sha`, `--date` or `--build-number`. `--generate` only creates the tag locally — publish it with `git push origin --tags`.
+Use `major`, `minor` or `patch`, optionally with `--verbose`, `--sha`, `--date` or `--build-number`.
 
 ## Contributing
 
