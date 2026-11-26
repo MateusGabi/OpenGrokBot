@@ -70,6 +70,20 @@ export function deleteMcpServer(name: string): Promise<unknown> {
   return call(`/api/team/mcp/${encodeURIComponent(name)}`, { method: 'DELETE' })
 }
 
+export type OAuthStatus = 'absent' | 'configured' | 'connected'
+
+export function startMcpOAuth(name: string, input: { clientId: string; clientSecret: string; redirectUri: string; scopes: string[] }): Promise<{ authorizationUrl: string; state: string }> {
+  return call(`/api/mcp/oauth/${encodeURIComponent(name)}/start`, json('POST', input))
+}
+
+export function mcpOAuthStatus(name: string): Promise<{ status: OAuthStatus }> {
+  return call(`/api/mcp/oauth/${encodeURIComponent(name)}/status`)
+}
+
+export function disconnectMcpOAuth(name: string): Promise<unknown> {
+  return call(`/api/mcp/oauth/${encodeURIComponent(name)}/disconnect`, { method: 'POST' })
+}
+
 export function putProvider(id: string, def: Partial<ProviderDef>): Promise<unknown> {
   return call(`/api/team/providers/${encodeURIComponent(id)}`, json('PUT', def))
 }

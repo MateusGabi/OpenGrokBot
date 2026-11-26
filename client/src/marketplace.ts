@@ -11,6 +11,8 @@ export interface MarketplaceItem {
   secrets?: { key: string; label: string }[]
   /** Command-line args the user may edit (e.g. a folder path). */
   argHint?: string
+  /** Servers that need an interactive OAuth connection instead of env vars. */
+  oauth?: { kind: 'google'; scopes: string[]; docsUrl: string }
 }
 
 const npx = (pkg: string, args: string[] = []): McpServerDef => ({ type: 'stdio', command: 'npx', args: ['-y', pkg, ...args] })
@@ -32,4 +34,5 @@ export const MARKETPLACE: MarketplaceItem[] = [
   { id: 'context7', name: 'Context7', category: 'Developer', icon: '📚', description: 'Up-to-date library and framework documentation for coding.', def: npx('@upstash/context7-mcp@latest') },
   { id: 'vercel', name: 'Vercel', category: 'Developer', icon: '▲', description: 'Deployments, projects and logs on Vercel.', def: { type: 'http', url: 'https://mcp.vercel.com' } },
   { id: 'chrome', name: 'Chrome DevTools', category: 'Developer', icon: '🧪', description: 'Inspect pages, console, network and performance in Chrome.', def: npx('chrome-devtools-mcp@latest') },
+  { id: 'google-drive', name: 'Google Drive', category: 'Featured', icon: '📂', description: 'Search, read, create and download files in Google Drive (official Google MCP server).', def: { type: 'http', url: 'https://drivemcp.googleapis.com/mcp/v1self' }, oauth: { kind: 'google', scopes: ['https://www.googleapis.com/auth/drive.readonly', 'https://www.googleapis.com/auth/drive.file'], docsUrl: 'https://developers.google.com/workspace/drive/api/guides/configure-mcp-server' } },
 ]
