@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 
 const root = process.cwd()
@@ -14,7 +14,8 @@ const gitignore = readFileSync(path.join(root, '.gitignore'), 'utf8')
 
 test('package is configured to build a Windows installer', () => {
   assert.equal(pkg.main, 'desktop/main.cjs')
-  assert.match(pkg.scripts?.['build:desktop'] ?? '', /electron-builder --win/)
+  assert.match(pkg.scripts?.['build:desktop'] ?? '', /node desktop\/build\.cjs/)
+  assert.ok(existsSync(path.join(root, 'desktop/build.cjs')), 'staged build wrapper must exist')
   assert.equal(pkg.build?.appId, 'com.opengrokbot.desktop')
   assert.equal(pkg.build?.productName, 'OpenGrokBot')
   assert.equal(pkg.build?.win?.target, 'nsis')

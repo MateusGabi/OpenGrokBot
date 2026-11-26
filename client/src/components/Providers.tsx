@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { API_PRESETS, PROVIDER_KINDS } from '../../../shared/catalog'
-import type { ProviderDef, ProviderStatus, Team } from '../../../shared/types'
+import type { ProviderDef, ProviderKind, ProviderStatus, Team } from '../../../shared/types'
 import { deleteProvider, providerStatuses, putProvider } from '../api'
 
 interface ProvidersProps {
@@ -8,6 +8,8 @@ interface ProvidersProps {
 }
 
 const BUILT_IN = ['claude', 'codex', 'gemini']
+/** Kinds a user can add as an API provider. `opencode` is the one that exposes MCP tools. */
+const API_KINDS = PROVIDER_KINDS.filter((k) => k.id === 'openai' || k.id === 'opencode')
 
 export function Providers({ team }: ProvidersProps) {
   const [statuses, setStatuses] = useState<ProviderStatus[]>([])
@@ -93,7 +95,7 @@ export function Providers({ team }: ProvidersProps) {
           <div className="row">
             <div className="row-text">
               <div className="row-title">None yet</div>
-              <div className="row-hint">Add Kimi, OpenRouter, DeepSeek, Groq, xAI Grok, Ollama or any OpenAI-compatible endpoint.</div>
+              <div className="row-hint">Add Kimi, OpenRouter, DeepSeek, Groq, xAI Grok, Ollama, or an Opencode + MCP provider to give employees the servers from the marketplace.</div>
             </div>
           </div>
         )}
@@ -138,6 +140,7 @@ function ProviderSheet({ team, id, onDone }: { team: Team; id: string | null; on
   const builtIn = id !== null && BUILT_IN.includes(id)
   const [preset, setPreset] = useState<string>('')
   const [pid, setPid] = useState(id ?? '')
+  const [kind, setKind] = useState<ProviderKind>(existing?.kind ?? 'openai')
   const [label, setLabel] = useState(existing?.label ?? '')
   const [baseUrl, setBaseUrl] = useState(existing?.baseUrl ?? '')
   const [apiKey, setApiKey] = useState(existing?.apiKey ?? '')
@@ -150,6 +153,7 @@ function ProviderSheet({ team, id, onDone }: { team: Team; id: string | null; on
     const p = API_PRESETS.find((x) => x.id === presetId)
     if (!p) return
     setPid(p.id)
+    setKind(p.kind ?? 'openai')
     setLabel(p.label)
     setBaseUrl(p.baseUrl)
     setModels(p.models.join(', '))
@@ -161,7 +165,7 @@ function ProviderSheet({ team, id, onDone }: { team: Team; id: string | null; on
     try {
       const def: Partial<ProviderDef> = builtIn
         ? { apiKey: apiKey.trim() || undefined, label: label.trim() || existing?.label }
-        : { kind: 'openai', label: label.trim() || pid, baseUrl: baseUrl.trim(), apiKey: apiKey.trim() || undefined, models: models.split(',').map((m) => m.trim()).filter(Boolean) }
+        : { kind, label: label.trim() || pid, baseUrl: baseUrl.trim(), apiKey: apiKey.trim() || undefined, models: models.split(',').map((m) => m.trim()).filter(Boolean) }
       if (!builtIn && !/^[a-z0-9_-]+$/.test(pid)) throw new Error('Id must be lowercase letters, digits, - or _')
       await putProvider(pid, def)
       onDone()
@@ -221,6 +225,17 @@ function ProviderSheet({ team, id, onDone }: { team: Team; id: string | null; on
                 </select>
               </label>
             )}
+            <label className="field">
+              <span>Provider type</span>
+              <select value={kind} onChange={(e) => setKind(e.target.value as ProviderKind)}>
+                {API_KINDS.map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.label}
+                  </option>
+                ))}
+              </select>
+              <small>{API_KINDS.find((k) => k.id === kind)?.hint}</small>
+            </label>
             <label className="field">
               <span>Id</span>
               <input value={pid} onChange={(e) => setPid(e.target.value)} placeholder="kimi" disabled={existing !== undefined} />

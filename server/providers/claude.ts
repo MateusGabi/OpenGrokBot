@@ -51,7 +51,7 @@ function mcpServersFor(team: Team, agent: Agent): Record<string, McpServerConfig
     const def = team.mcpServers[name]
     if (!def) continue
     if (def.type === 'stdio') {
-      out[name] = { type: 'stdio', command: def.command, ...(def.args ? { args: def.args } : {}), ...(def.env ? { env: def.env } : {}) }
+      out[name] = { type: 'stdio', command: def.command, ...(def.args ? { args: def.args } : {}), env: { ...process.env, ...(def.env ?? {}) } as Record<string, string> }
     } else {
       out[name] = { type: def.type, url: def.url, ...(def.headers ? { headers: def.headers } : {}) }
     }

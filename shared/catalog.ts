@@ -33,7 +33,7 @@ export const DEFAULT_PROVIDERS: Record<string, ProviderDef> = {
 }
 
 /** One-click presets for OpenAI-compatible APIs. */
-export const API_PRESETS: { id: string; label: string; baseUrl: string; models: string[]; keyHint: string }[] = [
+export const API_PRESETS: { id: string; label: string; baseUrl: string; models: string[]; keyHint: string; kind?: ProviderKind }[] = [
   { id: 'kimi', label: 'Kimi (Moonshot)', baseUrl: 'https://api.moonshot.ai/v1', models: ['kimi-k2-thinking', 'kimi-k2-0905-preview', 'kimi-k2-turbo-preview'], keyHint: 'platform.moonshot.ai → API keys' },
   { id: 'xai', label: 'xAI Grok', baseUrl: 'https://api.x.ai/v1', models: ['grok-4', 'grok-4-fast', 'grok-code-fast-1'], keyHint: 'console.x.ai' },
   { id: 'openrouter', label: 'OpenRouter', baseUrl: 'https://openrouter.ai/api/v1', models: ['anthropic/claude-sonnet-4.5', 'openai/gpt-5', 'google/gemini-2.5-pro', 'moonshotai/kimi-k2'], keyHint: 'openrouter.ai/keys' },
@@ -42,6 +42,7 @@ export const API_PRESETS: { id: string; label: string; baseUrl: string; models: 
   { id: 'openai', label: 'OpenAI API', baseUrl: 'https://api.openai.com/v1', models: ['gpt-5', 'gpt-5-mini', 'gpt-4.1'], keyHint: 'platform.openai.com' },
   { id: 'mistral', label: 'Mistral', baseUrl: 'https://api.mistral.ai/v1', models: ['mistral-large-latest', 'codestral-latest'], keyHint: 'console.mistral.ai' },
   { id: 'ollama', label: 'Ollama (local)', baseUrl: 'http://127.0.0.1:11434/v1', models: ['qwen3:32b', 'llama3.3', 'deepseek-r1:32b'], keyHint: 'No key needed (type anything)' },
+  { id: 'opencode2', label: 'Opencode + MCP', baseUrl: 'https://opencode.ai/inference/openai/v1', models: [], keyHint: 'opencode.ai → dashboard', kind: 'opencode' },
 ]
 
 export const EFFORTS: { id: Effort; label: string }[] = [
