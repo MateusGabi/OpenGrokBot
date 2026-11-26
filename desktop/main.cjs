@@ -1,8 +1,10 @@
 // Electron shell: starts the office server as a child Node process and opens it in a window.
 const { app, BrowserWindow, shell } = require('electron')
 const { spawn } = require('node:child_process')
+const { mkdirSync } = require('node:fs')
 const path = require('node:path')
 const http = require('node:http')
+const { childOptions } = require('./child.cjs')
 
 const PORT = Number(process.env.PORT ?? 4310)
 const URL = `http://127.0.0.1:${PORT}/`
@@ -10,8 +12,14 @@ const root = path.join(__dirname, '..')
 let server = null
 
 function startServer() {
-  const env = { ...process.env, PORT: String(PORT), ELECTRON_RUN_AS_NODE: '1' }
-  server = spawn(process.execPath, [path.join(root, 'dist', 'server', 'index.js')], { cwd: root, env, stdio: 'inherit' })
+  const stateDir = app.getPath('userData')
+  mkdirSync(stateDir, { recursive: true })
+  const options = childOptions(PORT, stateDir)
+  server = spawn(process.execPath, [path.join(root, 'dist', 'server', 'index.js')], { ...options, stdio: 'inherit' })
+  server.on('error', (err) => {
+    console.error('[desktop] could not start server:', err)
+    if (!app.isQuitting) app.quit()
+  })
   server.on('exit', (code) => {
     server = null
     if (code !== 0 && !app.isQuitting) console.error(`[desktop] server exited with code ${code}`)

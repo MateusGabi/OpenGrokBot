@@ -6,7 +6,7 @@ import type { Agent, AutoReviewRule, McpServerDef, ProviderDef, Skill, Team, Tea
 const PERMISSION_MODES = new Set(['default', 'acceptEdits', 'bypassPermissions', 'plan', 'dontAsk'])
 const EFFORTS = new Set(['low', 'medium', 'high', 'xhigh', 'max'])
 const SHAPES = new Set(['blob', 'round', 'triangle', 'hex', 'drop'])
-const PROVIDER_KINDS = new Set(['claude', 'codex', 'gemini', 'openai'])
+const PROVIDER_KINDS = new Set(['claude', 'codex', 'gemini', 'openai', 'opencode'])
 
 const DEFAULT_SETTINGS: TeamSettings = {
   maxMessagesPerRound: 6,
