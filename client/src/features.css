@@ -529,3 +529,154 @@ label.btn input {
   width: 30px;
   height: 30px;
 }
+
+/* offices: a quiet workspace inside the app */
+.offices-modal {
+  width: min(920px, 100%);
+  height: min(620px, 88vh);
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  overflow: hidden;
+}
+
+.offices-side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 10px 8px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+}
+
+.offices-workspace {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 8px 12px;
+  font-size: 13px;
+}
+.offices-workspace strong { flex: 1; }
+.offices-logo {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: var(--text);
+  color: var(--bg-sidebar);
+  font-size: 12px;
+}
+
+.offices-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.offices-item:hover { background: var(--bg-hover); color: var(--text); }
+.offices-item kbd { margin-left: auto; font: inherit; font-size: 11px; opacity: 0.7; }
+.offices-icon { width: 18px; flex: none; text-align: center; }
+.offices-new { color: var(--accent-text); }
+
+.offices-search {
+  width: 100%;
+  height: 28px;
+  margin: 2px 0 4px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-field);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+.offices-search::placeholder { color: var(--text-muted); }
+
+.offices-new-form { display: flex; gap: 5px; padding: 4px 0; }
+.offices-new-form input {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-field);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+.offices-new-form button {
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.offices-label { margin: 16px 8px 4px; color: var(--text-muted); font-size: 11px; font-weight: 600; }
+.offices-list { flex: 1; min-height: 0; overflow-y: auto; }
+.offices-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.offices-row:hover { background: var(--bg-hover); }
+.offices-row.is-selected { background: var(--bg-active); font-weight: 600; }
+.offices-row-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.offices-port { color: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.offices-footer { padding-top: 8px; border-top: 1px solid var(--border); }
+.offices-empty-hint { padding: 10px 8px; color: var(--text-muted); font-size: 12px; }
+
+.offices-page { min-width: 0; overflow-y: auto; background: var(--bg-main); }
+.offices-crumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 45px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.offices-crumb strong { color: var(--text); }
+.offices-content { max-width: 620px; margin: 0 auto; padding: 56px 40px; }
+.offices-page-icon { font-size: 44px; line-height: 1; margin-bottom: 12px; }
+.offices-content h1 { margin: 0 0 24px; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; }
+.offices-content h2 { margin: 0 0 8px; font-size: 20px; }
+.offices-props { margin-bottom: 28px; }
+.offices-props > div { display: flex; gap: 12px; padding: 5px 6px; border-radius: 5px; font-size: 13px; }
+.offices-props > div:hover { background: var(--bg-hover); }
+.offices-props span:first-child { width: 110px; flex: none; color: var(--text-muted); }
+.offices-props .mono { font-family: var(--mono); }
+.offices-props .path { color: var(--text-muted); overflow-wrap: anywhere; }
+.offices-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.offices-page-hint { margin-top: 32px; color: var(--text-muted); font-size: 13px; }
+.offices-blank { text-align: center; color: var(--text-muted); }
+.offices-status { max-width: 620px; margin: 0 auto; padding: 0 40px 20px; color: var(--danger-text); font-size: 12px; }
+

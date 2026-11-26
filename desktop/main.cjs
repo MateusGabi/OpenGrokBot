@@ -11,7 +11,6 @@ const registryLib = require('../shared/offices.cjs')
 const root = path.join(__dirname, '..')
 const running = new Map() // office id -> { office, server, win }
 let registry = null
-let manager = null
 
 function entry(id) {
   return registry.offices.find((o) => o.id === id)
@@ -67,7 +66,7 @@ function rebuildMenu() {
   }))
   Menu.setApplicationMenu(
     Menu.buildFromTemplate([
-      { label: 'Offices…', accelerator: 'CmdOrCtrl+Shift+O', click: () => openManager() },
+      { label: 'Offices…', accelerator: 'CmdOrCtrl+Shift+O', click: () => BrowserWindow.getFocusedWindow()?.webContents.send('offices:open') },
       { type: 'separator' },
       ...items,
       { type: 'separator' },
@@ -119,7 +118,7 @@ function openOffice(office) {
     autoHideMenuBar: true,
     titleBarStyle: 'hidden',
     titleBarOverlay: { color: '#141414', symbolColor: '#8f8f8f', height: 40 },
-    webPreferences: { contextIsolation: true, sandbox: true },
+    webPreferences: { contextIsolation: true, sandbox: true, preload: path.join(__dirname, 'offices-preload.cjs') },
   })
   win.webContents.setWindowOpenHandler(({ url }) => {
     void shell.openExternal(url)
@@ -144,31 +143,6 @@ function openOffice(office) {
       if (!app.isQuitting) dialog.showErrorBox('OpenGrokBot', `Office "${office.name}" did not start: ${err.message}`)
     })
   return running.get(office.id)
-}
-
-function openManager() {
-  if (manager && !manager.isDestroyed()) {
-    manager.focus()
-    return manager
-  }
-  manager = new BrowserWindow({
-    width: 460,
-    height: 620,
-    minWidth: 360,
-    minHeight: 420,
-    title: 'Offices — OpenGrokBot',
-    autoHideMenuBar: true,
-    webPreferences: {
-      contextIsolation: true,
-      sandbox: true,
-      preload: path.join(__dirname, 'offices-preload.cjs'),
-    },
-  })
-  manager.on('closed', () => {
-    manager = null
-  })
-  void manager.loadFile(path.join(__dirname, 'offices.html'))
-  return manager
 }
 
 function publicOffice(office) {
@@ -219,10 +193,7 @@ handle('remove', (id, deleteData) => {
   rebuildMenu()
   return true
 })
-handle('close', () => {
-  if (manager && !manager.isDestroyed()) manager.close()
-  return true
-})
+handle('close', () => true)
 
 app.whenReady()
   .then(async () => {
@@ -246,7 +217,6 @@ app.whenReady()
   })
 
 app.on('window-all-closed', () => {
-  if (manager && !manager.isDestroyed()) return
   app.isQuitting = true
   for (const id of [...running.keys()]) stopOffice(id, false, false)
   app.quit()

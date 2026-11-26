@@ -21,43 +21,41 @@ test('desktop icon assets exist and are usable', () => {
   assert.ok(!html.includes('data:image/svg+xml'), 'inline orange favicon must be gone')
 })
 
-test('offices manager screen is self-contained and offline', () => {
-  for (const file of ['offices.html', 'offices.css', 'offices.cjs', 'offices-preload.cjs']) {
-    assert.ok(existsSync(path.join(root, 'desktop', file)), `desktop/${file} must exist`)
-  }
-  const html = readFileSync(path.join(root, 'desktop', 'offices.html'), 'utf8')
-  const css = readFileSync(path.join(root, 'desktop', 'offices.css'), 'utf8')
+test('offices bridge exposes only the needed calls and an open notification', () => {
   const preload = readFileSync(path.join(root, 'desktop', 'offices-preload.cjs'), 'utf8')
-  assert.doesNotMatch(html + css, /https?:\/\//)
-  assert.doesNotMatch(html + css, /@import/)
-  for (const name of ['list', 'create', 'add', 'open', 'rename', 'remove', 'close']) {
+  assert.doesNotMatch(preload, /https?:\/\//)
+  for (const name of ['list', 'create', 'add', 'open', 'rename', 'remove', 'close', 'onOpen']) {
     assert.match(preload, new RegExp(name))
   }
+  assert.match(preload, /exposeInMainWorld\('offices', api\)/)
 })
 
-test('manager asks for a name when adding an existing office', () => {
-  const renderer = readFileSync(path.join(root, 'desktop', 'offices.cjs'), 'utf8')
-  assert.match(renderer, /\.add\(dir\.trim\(\), name\)/)
-})
-
-test('manager puts a focused new-office form above the list', () => {
-  const html = readFileSync(path.join(root, 'desktop', 'offices.html'), 'utf8')
-  const renderer = readFileSync(path.join(root, 'desktop', 'offices.cjs'), 'utf8')
-  const css = readFileSync(path.join(root, 'desktop', 'offices.css'), 'utf8')
-  assert.ok(html.indexOf('id="new"') < html.indexOf('id="list"'), 'create form must come before the office list')
-  assert.match(html, /Create office/)
-  assert.match(html, /data-theme="light"/)
-  assert.match(css, /\[data-theme='light'\]/)
-  assert.match(renderer, /input\.focus\(\)/)
-  assert.match(renderer, /Escape/)
-})
-
-test('manager uses a Notion-style sidebar and detail page', () => {
-  const html = readFileSync(path.join(root, 'desktop', 'offices.html'), 'utf8')
-  const css = readFileSync(path.join(root, 'desktop', 'offices.css'), 'utf8')
-  assert.ok(html.indexOf('class="sidebar"') < html.indexOf('class="main"'), 'sidebar must come before the page canvas')
-  assert.match(html, /id="detail"/)
-  assert.match(html, /Quick find/)
+test('office manager lives inside the React app', () => {
+  const component = readFileSync(path.join(root, 'client', 'src', 'components', 'Offices.tsx'), 'utf8')
+  const app = readFileSync(path.join(root, 'client', 'src', 'App.tsx'), 'utf8')
+  const css = readFileSync(path.join(root, 'client', 'src', 'features.css'), 'utf8')
+  const bridge = readFileSync(path.join(root, 'client', 'src', 'offices.ts'), 'utf8')
+  assert.match(app, /<Offices onClose=/)
+  assert.match(app, /officesOpen/)
+  assert.match(component, /Quick find/)
+  assert.match(component, /New office/)
+  assert.match(component, /Create office/)
+  assert.match(component, /api\.add\(dir\.trim\(\), name\.trim\(\)\)/)
+  assert.match(bridge, /onOpen\(callback: \(\) => void\): \(\) => void/)
+  assert.match(css, /\.offices-modal/)
   assert.match(css, /grid-template-columns: 248px 1fr/)
-  assert.match(css, /font-size: 40px/)
+})
+
+test('desktop opens the manager inside the focused window, not in a new one', () => {
+  const main = readFileSync(path.join(root, 'desktop', 'main.cjs'), 'utf8')
+  assert.doesNotMatch(main, /openManager/)
+  assert.doesNotMatch(main, /offices\.html/)
+  assert.match(main, /preload: path\.join\(__dirname, 'offices-preload\.cjs'\)/)
+  assert.match(main, /webContents\.send\('offices:open'\)/)
+})
+
+test('separate manager screen files are gone', () => {
+  for (const file of ['offices.html', 'offices.css', 'offices.cjs']) {
+    assert.ok(!existsSync(path.join(root, 'desktop', file)), `desktop/${file} should not exist`)
+  }
 })

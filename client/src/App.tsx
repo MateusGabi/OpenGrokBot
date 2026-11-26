@@ -5,6 +5,7 @@ import { ChatView } from './components/ChatView'
 import { Composer, type ReplyTarget } from './components/Composer'
 import { Menu, type MenuItem } from './components/Menu'
 import { NewChat } from './components/NewChat'
+import { Offices } from './components/Offices'
 import { Profile } from './components/Profile'
 import { Search } from './components/Search'
 import { Settings, type SettingsSection } from './components/Settings'
@@ -12,6 +13,7 @@ import { Sidebar } from './components/Sidebar'
 import { personFor } from './people'
 import { initialState, reducer } from './state'
 import { useTheme } from './theme'
+import { officesApi } from './offices'
 import { markRead, markUnread } from './unread'
 
 interface MenuState {
@@ -31,6 +33,7 @@ export function App() {
   /** undefined = closed, null = new chat, Conversation = editing */
   const [chatEditor, setChatEditor] = useState<Conversation | null | undefined>(undefined)
   const [search, setSearch] = useState(false)
+  const [officesOpen, setOfficesOpen] = useState(false)
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null)
   const [jumpTo, setJumpTo] = useState<string | null>(null)
   const [readTick, setReadTick] = useState(0)
@@ -67,6 +70,12 @@ export function App() {
       alive = false
       es.close()
     }
+  }, [])
+
+  useEffect(() => {
+    const api = officesApi()
+    if (!api) return
+    return api.onOpen(() => setOfficesOpen(true))
   }, [])
 
   const maybeNotify = (event: ServerEvent) => {
@@ -107,13 +116,14 @@ export function App() {
       if (e.key !== 'Escape') return
       if (menu) setMenu(null)
       else if (search) setSearch(false)
+      else if (officesOpen) setOfficesOpen(false)
       else if (chatEditor !== undefined) setChatEditor(undefined)
       else if (settings) setSettings(null)
       else if (profile !== undefined) setProfile(undefined)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [menu, search, chatEditor, settings, profile])
+  }, [menu, search, officesOpen, chatEditor, settings, profile])
 
   const conversation = state.conversations.find((c) => c.id === activeId) ?? state.conversations.find((c) => c.id === 'group') ?? state.conversations[0]
 
@@ -282,6 +292,7 @@ export function App() {
           }}
         />
       )}
+      {officesOpen && <Offices onClose={() => setOfficesOpen(false)} />}
       {menu && <Menu x={menu.x} y={menu.y} items={menuItems(menu.conversationId)} onClose={() => setMenu(null)} />}
     </div>
   )
