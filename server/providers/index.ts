@@ -11,6 +11,7 @@ const RUNNERS: Record<ProviderKind, ProviderRunner> = {
   codex: runCodexTurn,
   gemini: runGeminiTurn,
   openai: runOpenAiTurn,
+  opencode: runOpenAiTurn,
 }
 
 /** Providers whose CLI keeps a resumable session id. */
@@ -47,7 +48,8 @@ async function probe(id: string, def: ProviderDef): Promise<ProviderStatus> {
         if (!v) return { ...base, ok: false, detail: 'Gemini CLI not found. Install: npm i -g @google/gemini-cli, then run `gemini` once to sign in with Google.' }
         return { ...base, ok: true, detail: def.apiKey ? `${v} · API key` : `${v} · Google account login` }
       }
-      case 'openai': {
+      case 'openai':
+      case 'opencode': {
         if (!def.baseUrl) return { ...base, ok: false, detail: 'No base URL.' }
         const models = await listOpenAiModels(def.baseUrl, def.apiKey)
         return { ...base, ok: true, detail: `${models.length} models available`, models }

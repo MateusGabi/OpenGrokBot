@@ -14,6 +14,7 @@ export const MODEL_SUGGESTIONS: Record<ProviderKind, string[]> = {
   codex: ['default', 'gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5'],
   gemini: ['default', 'gemini-3-pro-preview', 'gemini-3-flash-preview', 'gemini-2.5-pro', 'gemini-2.5-flash'],
   openai: [],
+  opencode: [],
 }
 
 export const PROVIDER_KINDS: { id: ProviderKind; label: string; hint: string }[] = [
@@ -21,6 +22,7 @@ export const PROVIDER_KINDS: { id: ProviderKind; label: string; hint: string }[]
   { id: 'codex', label: 'Codex CLI', hint: 'OpenAI. Uses your ChatGPT / Codex subscription login (`codex login`). Full coding tools.' },
   { id: 'gemini', label: 'Gemini CLI', hint: 'Google. Signs in with your Google account, the same one Antigravity uses. Full coding tools.' },
   { id: 'openai', label: 'API (OpenAI-compatible)', hint: 'Any chat API: Kimi, OpenRouter, DeepSeek, Groq, xAI Grok, Ollama… Chat plus built-in file/shell tools.' },
+  { id: 'opencode', label: 'Opencode + MCP', hint: 'Opencode OpenAI-compatible API with the employee’s MCP servers (stdio, http, sse).' },
 ]
 
 /** Built-in defaults that always exist in team.providers. */

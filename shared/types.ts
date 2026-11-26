@@ -13,7 +13,7 @@ export type McpServerDef =
  * - gemini: Google Gemini CLI. Your Google account (the same one Antigravity uses).
  * - openai: any OpenAI-compatible chat API: Kimi/Moonshot, OpenRouter, DeepSeek, Groq, xAI, Ollama…
  */
-export type ProviderKind = 'claude' | 'codex' | 'gemini' | 'openai'
+export type ProviderKind = 'claude' | 'codex' | 'gemini' | 'openai' | 'opencode'
 
 export interface ProviderDef {
   kind: ProviderKind
