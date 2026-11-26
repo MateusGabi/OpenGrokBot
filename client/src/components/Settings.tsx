@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { formatArgs, parseArgs } from '../../../shared/args'
 import { RATE_LIMIT_LABELS } from '../../../shared/catalog'
 import type { AccountStatus, AutoReviewRule, Conversation, McpServerDef, Routine, Team, TeamSettings, UsageSummary, UsageTotals } from '../../../shared/types'
-import { deleteMcpServer, putMcpServer, putSettings, refreshAccount } from '../api'
+import { deleteMcpServer, disconnectMcpOAuth, mcpOAuthStatus, putMcpServer, putSettings, refreshAccount, startMcpOAuth, type OAuthStatus } from '../api'
 import { formatCost, formatRelative, formatTokens, modelLabel } from '../format'
 import { MARKETPLACE, type MarketplaceItem } from '../marketplace'
 import { conversationTitle, personFor } from '../people'
@@ -230,6 +230,8 @@ function Marketplace({ team }: SettingsProps) {
   const [adding, setAdding] = useState<MarketplaceItem | null>(null)
   const [custom, setCustom] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [statuses, setStatuses] = useState<Record<string, OAuthStatus>>({})
+  const [pending, setPending] = useState<string | null>(null)
   const installed = Object.keys(team.mcpServers)
   const categories = ['All', ...new Set(MARKETPLACE.map((m) => m.category))]
   const items = MARKETPLACE.filter((m) => (category === 'All' || m.category === category) && `${m.name} ${m.description}`.toLowerCase().includes(q.toLowerCase()))
@@ -238,6 +240,48 @@ function Marketplace({ team }: SettingsProps) {
     setError(null)
     try {
       await deleteMcpServer(name)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  const reload = useCallback(async (id: string): Promise<OAuthStatus> => {
+    try {
+      const { status } = await mcpOAuthStatus(id)
+      setStatuses((prev) => ({ ...prev, [id]: status }))
+      return status
+    } catch {
+      setStatuses((prev) => ({ ...prev, [id]: 'absent' }))
+      return 'absent'
+    }
+  }, [])
+
+  useEffect(() => {
+    for (const m of MARKETPLACE) if (m.oauth) void reload(m.id)
+  }, [reload])
+
+  useEffect(() => {
+    if (!pending) return
+    const timer = window.setInterval(() => {
+      void reload(pending).then((status) => { if (status === 'connected') setPending(null) })
+    }, 2000)
+    return () => window.clearInterval(timer)
+  }, [pending, reload])
+
+  useEffect(() => {
+    const onMessage = (ev: MessageEvent<unknown>) => {
+      const data = ev.data as { type?: unknown; name?: unknown } | null
+      if (data?.type === 'ogb-oauth' && typeof data.name === 'string') void reload(data.name).then((status) => { if (status === 'connected') setPending(null) })
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [reload])
+
+  const disconnect = async (name: string) => {
+    setError(null)
+    try {
+      await disconnectMcpOAuth(name)
+      setStatuses((prev) => ({ ...prev, [name]: 'absent' }))
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     }
@@ -292,7 +336,20 @@ function Marketplace({ team }: SettingsProps) {
               <div className="row-hint">{m.description}</div>
             </div>
             {installed.includes(m.id) ? (
-              <span className="muted">Added</span>
+              <>
+                {m.oauth && (statuses[m.id] ?? 'absent') === 'connected' && <span className="muted">Conectado</span>}
+                {m.oauth && (statuses[m.id] ?? 'absent') === 'configured' && (
+                  <button type="button" className="btn btn-pill" onClick={() => setAdding(m)}>
+                    Reconectar
+                  </button>
+                )}
+                {!m.oauth && <span className="muted">Added</span>}
+                {m.oauth && (statuses[m.id] ?? 'absent') !== 'absent' && (
+                  <button type="button" className="btn btn-danger-ghost" onClick={() => void disconnect(m.id)}>
+                    Disconnect
+                  </button>
+                )}
+              </>
             ) : (
               <button type="button" className="btn btn-pill" onClick={() => setAdding(m)}>
                 Add
@@ -301,14 +358,16 @@ function Marketplace({ team }: SettingsProps) {
           </div>
         ))}
       </div>
-      {adding && <AddServer item={adding} onDone={() => setAdding(null)} />}
-      {custom && <AddServer item={null} onDone={() => setCustom(false)} />}
+      {adding && <AddServer item={adding} onDone={() => setAdding(null)} onPending={setPending} />}
+      {custom && <AddServer item={null} onDone={() => setCustom(false)} onPending={setPending} />}
     </>
   )
 }
 
-function AddServer({ item, onDone }: { item: MarketplaceItem | null; onDone: () => void }) {
+function AddServer({ item, onDone, onPending }: { item: MarketplaceItem | null; onDone: () => void; onPending: (name: string) => void }) {
   const [name, setName] = useState(item?.id ?? '')
+  const [clientId, setClientId] = useState('')
+  const [clientSecret, setClientSecret] = useState('')
   const [type, setType] = useState<McpServerDef['type']>(item?.def.type ?? 'stdio')
   const [command, setCommand] = useState(item?.def.type === 'stdio' ? item.def.command : 'npx')
   const [args, setArgs] = useState(item?.def.type === 'stdio' ? formatArgs(item.def.args ?? []) : '')
@@ -322,6 +381,17 @@ function AddServer({ item, onDone }: { item: MarketplaceItem | null; onDone: () 
     setBusy(true)
     setError(null)
     try {
+      const serverName = name.trim()
+      if (item?.oauth) {
+        if (!clientId.trim() || !clientSecret.trim()) throw new Error('Client ID e Client Secret são obrigatórios.')
+        await putMcpServer(serverName, item.def)
+        const redirectUri = `${window.location.origin}/api/mcp/oauth/${serverName}/callback`
+        const { authorizationUrl } = await startMcpOAuth(serverName, { clientId: clientId.trim(), clientSecret: clientSecret.trim(), redirectUri, scopes: item.oauth.scopes })
+        window.open(authorizationUrl, 'ogb-google-oauth', 'width=560,height=720')
+        onPending(serverName)
+        onDone()
+        return
+      }
       const env: Record<string, string> = { ...secrets }
       for (const line of envText.split('\n')) {
         const m = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line)
@@ -349,51 +419,76 @@ function AddServer({ item, onDone }: { item: MarketplaceItem | null; onDone: () 
           <span>Name</span>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="github" disabled={item !== null} />
         </label>
-        {!item && (
-          <label className="field">
-            <span>Transport</span>
-            <select value={type} onChange={(e) => setType(e.target.value as McpServerDef['type'])}>
-              <option value="stdio">Local command (stdio)</option>
-              <option value="http">Remote HTTP</option>
-              <option value="sse">Remote SSE</option>
-            </select>
-          </label>
-        )}
-        {type === 'stdio' ? (
+        {item?.oauth ? (
           <>
             <label className="field">
-              <span>Command</span>
-              <input value={command} onChange={(e) => setCommand(e.target.value)} />
+              <span>Redirect URI to register in Google Cloud</span>
+              <input readOnly value={`${window.location.origin}/api/mcp/oauth/${name.trim()}/callback`} onFocus={(e) => e.currentTarget.select()} />
+              <small>
+                Create a Web application OAuth client with this exact redirect URI, “Use this client for an AI-powered agent” enabled, and the Drive API + Drive MCP API on.{' '}
+                <a href={item.oauth.docsUrl} target="_blank" rel="noreferrer">
+                  Google setup guide ↗
+                </a>
+              </small>
             </label>
             <label className="field">
-              <span>Arguments</span>
-              <input value={args} onChange={(e) => setArgs(e.target.value)} />
-              {item?.argHint && <small>{item.argHint}</small>}
-              <small>Quote arguments that contain spaces, e.g. "C:\My Projects".</small>
+              <span>Client ID</span>
+              <input value={clientId} onChange={(e) => setClientId(e.target.value)} placeholder="…apps.googleusercontent.com" />
+            </label>
+            <label className="field">
+              <span>Client Secret</span>
+              <input type="password" value={clientSecret} onChange={(e) => setClientSecret(e.target.value)} />
             </label>
           </>
         ) : (
-          <label className="field">
-            <span>URL</span>
-            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" />
-          </label>
+          <>
+            {!item && (
+              <label className="field">
+                <span>Transport</span>
+                <select value={type} onChange={(e) => setType(e.target.value as McpServerDef['type'])}>
+                  <option value="stdio">Local command (stdio)</option>
+                  <option value="http">Remote HTTP</option>
+                  <option value="sse">Remote SSE</option>
+                </select>
+              </label>
+            )}
+            {type === 'stdio' ? (
+              <>
+                <label className="field">
+                  <span>Command</span>
+                  <input value={command} onChange={(e) => setCommand(e.target.value)} />
+                </label>
+                <label className="field">
+                  <span>Arguments</span>
+                  <input value={args} onChange={(e) => setArgs(e.target.value)} />
+                  {item?.argHint && <small>{item.argHint}</small>}
+                  <small>Quote arguments that contain spaces, e.g. "C:\My Projects".</small>
+                </label>
+              </>
+            ) : (
+              <label className="field">
+                <span>URL</span>
+                <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" />
+              </label>
+            )}
+            {(item?.secrets ?? []).map((s) => (
+              <label key={s.key} className="field">
+                <span>{s.label}</span>
+                <input type="password" value={secrets[s.key] ?? ''} onChange={(e) => setSecrets({ ...secrets, [s.key]: e.target.value })} placeholder={s.key} />
+              </label>
+            ))}
+            <label className="field">
+              <span>{type === 'stdio' ? 'Extra environment variables' : 'Extra headers'} (optional)</span>
+              <textarea rows={2} value={envText} onChange={(e) => setEnvText(e.target.value)} placeholder={'KEY=value\nOTHER=value'} />
+            </label>
+          </>
         )}
-        {(item?.secrets ?? []).map((s) => (
-          <label key={s.key} className="field">
-            <span>{s.label}</span>
-            <input type="password" value={secrets[s.key] ?? ''} onChange={(e) => setSecrets({ ...secrets, [s.key]: e.target.value })} placeholder={s.key} />
-          </label>
-        ))}
-        <label className="field">
-          <span>{type === 'stdio' ? 'Extra environment variables' : 'Extra headers'} (optional)</span>
-          <textarea rows={2} value={envText} onChange={(e) => setEnvText(e.target.value)} placeholder={'KEY=value\nOTHER=value'} />
-        </label>
         <div className="actions">
           <button type="button" className="btn" onClick={onDone}>
             Cancel
           </button>
           <button type="button" className="btn btn-primary" disabled={busy || !name.trim()} onClick={() => void save()}>
-            {busy ? 'Adding…' : 'Add server'}
+            {busy ? 'Connecting…' : item?.oauth ? 'Authorize with Google' : 'Add server'}
           </button>
         </div>
       </div>
