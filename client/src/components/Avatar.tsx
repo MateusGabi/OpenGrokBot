@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react'
 import type { AvatarShape } from '../../../shared/types'
+import { registerEyes } from '../eyeTracking'
 import type { Person } from '../people'
 
 interface AvatarProps {
@@ -16,6 +18,8 @@ const SHAPES: Record<AvatarShape, string> = {
 
 /** A friendly face in the employee's color and shape; the owner gets an initial on a gradient. */
 export function Avatar({ person, size = 36 }: AvatarProps) {
+  const eyesRef = useRef<SVGGElement>(null)
+  useEffect(() => registerEyes(eyesRef.current), [])
   if (person.kind === 'owner') {
     const initial = person.name.trim().charAt(0).toUpperCase() || '•'
     return (
@@ -30,9 +34,20 @@ export function Avatar({ person, size = 36 }: AvatarProps) {
   return (
     <svg className="avatar" width={size} height={size} viewBox="0 0 40 40" aria-label={person.name}>
       <path d={SHAPES[shape]} fill={person.color} />
-      <ellipse cx="14.5" cy={eyeY} rx="2.3" ry="2.6" fill="#141414" />
-      <ellipse cx="25.5" cy={eyeY} rx="2.3" ry="2.6" fill="#141414" />
-      <path d={`M15.5 ${mouthY}c2.5 2.2 6.5 2.2 9 0`} stroke="#141414" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+      <g className="avatar-eyes" ref={eyesRef}>
+        <ellipse cx="14.5" cy={eyeY} rx="2.3" ry="2.6" fill="#141414" />
+        <ellipse cx="25.5" cy={eyeY} rx="2.3" ry="2.6" fill="#141414" />
+      </g>
+      <path
+        className="avatar-brow"
+        d={`M23.2 ${eyeY - 5.6}q2.2-1.8 4.4-0.2`}
+        stroke="#141414"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path className="avatar-mouth" d={`M15.5 ${mouthY}c2.5 2.2 6.5 2.2 9 0`} stroke="#141414" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+      <circle className="avatar-mouth-thinking" cx="20" cy={mouthY + 0.3} r="1.7" fill="#141414" />
     </svg>
   )
 }
