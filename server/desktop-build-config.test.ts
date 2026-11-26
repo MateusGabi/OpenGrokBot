@@ -7,7 +7,7 @@ const root = process.cwd()
 const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')) as {
   main?: string
   scripts?: Record<string, string>
-  build?: { appId?: string; productName?: string; win?: { target?: string; icon?: string } }
+  build?: { appId?: string; productName?: string; files?: string[]; win?: { target?: string; icon?: string } }
   devDependencies?: Record<string, string>
 }
 const gitignore = readFileSync(path.join(root, '.gitignore'), 'utf8')
@@ -19,6 +19,8 @@ test('package is configured to build a Windows installer', () => {
   assert.equal(pkg.build?.productName, 'OpenGrokBot')
   assert.equal(pkg.build?.win?.target, 'nsis')
   assert.equal(pkg.build?.win?.icon, 'build/icon.png')
+  assert.ok(pkg.build?.files?.includes('dist/**/*'), 'built client/server must be packaged')
+  assert.ok(pkg.build?.files?.includes('team.example.json'), 'first-run seed must be at package root')
   assert.match(pkg.devDependencies?.['electron-builder'] ?? '', /^\^?26/)
   assert.match(gitignore, /^release\/$/m)
 })
