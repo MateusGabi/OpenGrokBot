@@ -343,7 +343,13 @@ function Marketplace({ team }: SettingsProps) {
                     Reconectar
                   </button>
                 )}
+                {m.oauth && (statuses[m.id] ?? 'absent') === 'absent' && <span className="muted">—</span>}
                 {!m.oauth && <span className="muted">Added</span>}
+                {m.oauth && (statuses[m.id] ?? 'absent') === 'absent' && (
+                  <button type="button" className="btn btn-pill" onClick={() => setAdding(m)}>
+                    Authorize
+                  </button>
+                )}
                 {m.oauth && (statuses[m.id] ?? 'absent') !== 'absent' && (
                   <button type="button" className="btn btn-danger-ghost" onClick={() => void disconnect(m.id)}>
                     Disconnect
@@ -384,12 +390,20 @@ function AddServer({ item, onDone, onPending }: { item: MarketplaceItem | null; 
       const serverName = name.trim()
       if (item?.oauth) {
         if (!clientId.trim() || !clientSecret.trim()) throw new Error('Client ID e Client Secret são obrigatórios.')
-        await putMcpServer(serverName, item.def)
-        const redirectUri = `${window.location.origin}/api/mcp/oauth/${serverName}/callback`
-        const { authorizationUrl } = await startMcpOAuth(serverName, { clientId: clientId.trim(), clientSecret: clientSecret.trim(), redirectUri, scopes: item.oauth.scopes })
-        window.open(authorizationUrl, 'ogb-google-oauth', 'width=560,height=720')
-        onPending(serverName)
-        onDone()
+        // Open synchronously from the click handler; browsers block popups opened after awaits.
+        const popup = window.open('', 'ogb-google-oauth', 'width=560,height=720')
+        if (!popup) throw new Error('O navegador bloqueou a janela de autorização. Permita popups para este site e tente novamente.')
+        try {
+          await putMcpServer(serverName, item.def)
+          const redirectUri = `${window.location.origin}/api/mcp/oauth/${serverName}/callback`
+          const { authorizationUrl } = await startMcpOAuth(serverName, { clientId: clientId.trim(), clientSecret: clientSecret.trim(), redirectUri, scopes: item.oauth.scopes })
+          popup.location.href = authorizationUrl
+          onPending(serverName)
+          onDone()
+        } catch (err) {
+          popup.close()
+          throw err
+        }
         return
       }
       const env: Record<string, string> = { ...secrets }

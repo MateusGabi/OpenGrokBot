@@ -208,7 +208,7 @@ Run: `npm test` — expected: compile error, `openMcpServers` currently accepts 
 
 - [ ] **Step 3: Implement**
 
-In `openMcpServers`, before connecting each server: if `oauth?.status(name) === 'configured'`, emit `MCP ${name}: not authorized — reconnect in Settings → Marketplace` via `onNotice` and `continue`. Otherwise pass `oauth?.authProvider(name)` into `transportFor`; `transportFor` adds `authProvider` only for `http`/`sse`. In `server/providers/opencode.ts`, pass `params.oauth` as the fourth argument.
+In `openMcpServers`, before connecting each server: if `oauth?.status(name) === 'configured'`, first `await oauth.accessToken(name)` (this refreshes an expired but valid grant); skip with `MCP ${name}: not authorized — reconnect in Settings → Marketplace` via `onNotice` only when no token is returned or the refresh throws. If the status is `absent` and the def is the official Drive URL, emit the same notice instead of letting the transport fail with a raw 401. Otherwise pass `oauth?.authProvider(name)` into `transportFor`; `transportFor` adds `authProvider` only for `http`/`sse`. In `server/providers/opencode.ts`, pass `params.oauth` as the fourth argument.
 
 - [ ] **Step 4: Run tests and typecheck**
 
@@ -266,7 +266,7 @@ Import `useEffect`, `mcpOAuthStatus`, `disconnectMcpOAuth`, `OAuthStatus`. Add `
 
 - [ ] **Step 2: Branch `AddServer` for OAuth items**
 
-When `item?.oauth`: render Client ID and Client Secret password fields, the exact redirect URI `${window.location.origin}/api/mcp/oauth/${name}/callback` as selectable text, and a link to `item.oauth.docsUrl` with a short instruction to register that URI in Google Cloud. Hide the generic secrets/env fields for these items. On submit: `await putMcpServer(name, item.def)`, then `await startMcpOAuth(name, { clientId, clientSecret, redirectUri, scopes: item.oauth.scopes })`, then `window.open(authorizationUrl, 'ogb-google-oauth', 'width=560,height=720')`, call `onDone()` and `setPending(name)`. If either call fails, keep the modal open and show the error. Non-OAuth items keep the existing save path unchanged.
+When `item?.oauth`: render Client ID and Client Secret password fields, the exact redirect URI `${window.location.origin}/api/mcp/oauth/${name}/callback` as selectable text, and a link to `item.oauth.docsUrl` with a short instruction to register that URI in Google Cloud. Hide the generic secrets/env fields for these items. On submit: open the popup **synchronously** with `window.open('', 'ogb-google-oauth', 'width=560,height=720')` before any `await` (browsers block late popups); a `null` return is a visible error and keeps the modal open. Then `await putMcpServer(name, item.def)`, `await startMcpOAuth(name, { clientId, clientSecret, redirectUri, scopes: item.oauth.scopes })`, navigate the popup with `popup.location.href = authorizationUrl`, call `onDone()` and `setPending(name)`. Close the popup and keep the modal open if either call fails. Non-OAuth items keep the existing save path unchanged.
 
 - [ ] **Step 3: Verify**
 

@@ -82,3 +82,37 @@ test('MCP sem autorização OAuth é ignorado com aviso em turno de funcionário
     await bundle.close()
   }
 })
+
+test('MCP configured com token renovável continua disponível', async () => {
+  const team = teamWith('fake')
+  const notices: string[] = []
+  let refreshes = 0
+  const oauth: OAuthAccess = { status: () => 'configured', accessToken: async () => { refreshes++; return 'tok' }, authProvider: () => undefined }
+  const bundle = await openMcpServers(team, team.agents[0]!, (line) => notices.push(line), oauth)
+  try {
+    assert.ok(bundle.tools.some((t) => t.name === 'mcp__fake__ping'))
+    assert.equal(notices.some((n) => n.includes('not authorized')), false)
+    assert.equal(refreshes, 1)
+  } finally {
+    await bundle.close()
+  }
+})
+
+test('Google Drive desconectado avisa como reconnect em vez de erro bruto', async () => {
+  const team = parseTeam({
+    company: 'T', owner: { id: 'user', name: 'B', title: 'CEO' }, workspace: '.',
+    providers: { api: { kind: 'openai', label: 'API', baseUrl: 'http://mock/v1', apiKey: 'k' } },
+    mcpServers: { 'google-drive': { type: 'http', url: 'https://drivemcp.googleapis.com/mcp/v1self' } },
+    agents: [{ id: 'a', name: 'A', role: 'R', color: '#fff', shape: 'blob', provider: 'api', model: 'm', effort: 'low', personality: 'p', tools: [], mcpServers: ['google-drive'] }],
+    skills: {}, settings: {},
+  }, '.')
+  const notices: string[] = []
+  const oauth: OAuthAccess = { status: () => 'absent', accessToken: async () => undefined, authProvider: () => undefined }
+  const bundle = await openMcpServers(team, team.agents[0]!, (line) => notices.push(line), oauth)
+  try {
+    assert.deepEqual(bundle.tools, [])
+    assert.ok(notices.some((n) => n.includes('not authorized') && n.includes('google-drive')))
+  } finally {
+    await bundle.close()
+  }
+})

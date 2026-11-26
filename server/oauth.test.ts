@@ -164,3 +164,46 @@ test('authProvider.tokens devolve o token atual', async () => {
     cleanup()
   }
 })
+
+test('accessToken expirado sem refresh token devolve undefined', async () => {
+  const { oauth, store, cleanup } = setup()
+  try {
+    store.set(NAME, { ...baseEntry, accessToken: 'old', expiresAt: Date.now() - 1000 })
+    assert.equal(await oauth.accessToken(NAME), undefined)
+  } finally {
+    cleanup()
+  }
+})
+
+test('refresh em voo é cancelado se as credenciais são removidas', async () => {
+  let resolveToken!: (response: Response) => void
+  const pending = new Promise<Response>((resolve) => { resolveToken = resolve })
+  const { oauth, store, cleanup } = setup({ response: () => pending })
+  try {
+    store.set(NAME, { ...baseEntry, refreshToken: 'refresh', expiresAt: 1 })
+    const refresh = oauth.accessToken(NAME)
+    oauth.disconnect(NAME)
+    resolveToken(Response.json({ access_token: 'tok', expires_in: 3600, token_type: 'Bearer' }))
+    await assert.rejects(() => refresh, OAuthNeedsAuthError)
+    assert.equal(store.get(NAME), undefined)
+  } finally {
+    cleanup()
+  }
+})
+
+test('troca de código em voo é cancelada por uma nova autorização', async () => {
+  let resolveToken!: (response: Response) => void
+  const pending = new Promise<Response>((resolve) => { resolveToken = resolve })
+  const { oauth, store, cleanup } = setup({ response: () => pending })
+  try {
+    oauth.start(NAME, { ...baseEntry, clientId: 'first', scopes: GOOGLE_DRIVE_SCOPES })
+    const exchange = oauth.complete(NAME, store.get(NAME)!.state!, 'abc')
+    oauth.start(NAME, { ...baseEntry, clientId: 'second', scopes: GOOGLE_DRIVE_SCOPES })
+    resolveToken(Response.json({ access_token: 'tok', expires_in: 3600, token_type: 'Bearer' }))
+    await assert.rejects(() => exchange, OAuthNeedsAuthError)
+    assert.equal(store.get(NAME)!.clientId, 'second')
+    assert.equal(store.get(NAME)!.accessToken, undefined)
+  } finally {
+    cleanup()
+  }
+})

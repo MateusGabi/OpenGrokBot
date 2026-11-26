@@ -46,7 +46,7 @@ function envFor(provider: ProviderDef): Record<string, string> {
   return env
 }
 
-async function mcpServersFor(team: Team, agent: Agent, oauth?: OAuthAccess): Promise<Record<string, McpServerConfig>> {
+async function mcpServersFor(team: Team, agent: Agent, oauth?: OAuthAccess, onNotice?: (line: string) => void): Promise<Record<string, McpServerConfig>> {
   const out: Record<string, McpServerConfig> = {}
   for (const name of agent.mcpServers) {
     const def = team.mcpServers[name]
@@ -54,7 +54,12 @@ async function mcpServersFor(team: Team, agent: Agent, oauth?: OAuthAccess): Pro
     if (def.type === 'stdio') {
       out[name] = { type: 'stdio', command: def.command, ...(def.args ? { args: def.args } : {}), env: { ...process.env, ...(def.env ?? {}) } as Record<string, string> }
     } else {
-      const token = await oauth?.accessToken(name)
+      let token: string | undefined
+      try {
+        token = await oauth?.accessToken(name)
+      } catch {
+        onNotice?.(`MCP ${name}: not authorized — reconnect in Settings → Marketplace`)
+      }
       out[name] = { type: def.type, url: def.url, ...(def.headers || token ? { headers: { ...(def.headers ?? {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) } } : {}) }
     }
   }
@@ -62,7 +67,7 @@ async function mcpServersFor(team: Team, agent: Agent, oauth?: OAuthAccess): Pro
 }
 
 export async function buildQueryOptions(team: Team, conversation: Conversation, agent: Agent, provider: ProviderDef, sessionId: string | undefined, abort: AbortController, handlers?: TurnHandlers, notes = '', oauth?: OAuthAccess): Promise<Options> {
-  const mcpServers = await mcpServersFor(team, agent, oauth)
+  const mcpServers = await mcpServersFor(team, agent, oauth, handlers?.onActivity)
   const asks = agent.approvals !== 'auto' && !agent.autoApproveTools && handlers?.onToolPermission !== undefined
   // Tools that must stop for approval are left out of allowedTools so Claude Code calls canUseTool for them.
   const allowedTools = asks
@@ -107,7 +112,13 @@ export async function runClaudeTurn(params: RunTurnParams): Promise<TurnResult> 
   else signal.addEventListener('abort', onAbort, { once: true })
 
   const prompt = buildTurnPrompt(team, conversation, agent, sessionId !== undefined, note)
-  const q = query({ prompt, options: await buildQueryOptions(team, conversation, agent, provider, sessionId, abort, handlers, notes ?? '', oauth) })
+  let options: Options
+  try {
+    options = await buildQueryOptions(team, conversation, agent, provider, sessionId, abort, handlers, notes ?? '', oauth)
+  } catch (err) {
+    return { text: '', error: err instanceof Error ? err.message : String(err) }
+  }
+  const q = query({ prompt, options })
 
   let text = ''
   let resultText = ''

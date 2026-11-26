@@ -3,7 +3,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js'
-import type { OAuthAccess } from '../oauth.js'
+import { GOOGLE_DRIVE_MCP_URL, type OAuthAccess } from '../oauth.js'
 import type { Agent, McpServerDef, Team } from '../../shared/types.js'
 import type { ExternalTool, ExternalToolRunner } from './types.js'
 
@@ -36,7 +36,21 @@ export async function openMcpServers(team: Team, agent: Agent, onNotice?: (line:
   for (const name of agent.mcpServers) {
     const def = team.mcpServers[name]
     if (!def) continue
-    if (oauth?.status(name) === 'configured') {
+    const status = oauth?.status(name)
+    if (oauth && status === 'configured') {
+      // "configured" includes an expired but refreshable grant — try the refresh before giving up.
+      let token: string | undefined
+      try {
+        token = await oauth.accessToken(name)
+      } catch {
+        token = undefined
+      }
+      if (!token) {
+        onNotice?.(`MCP ${name}: not authorized — reconnect in Settings → Marketplace`)
+        continue
+      }
+    }
+    if (oauth && status === 'absent' && def.type !== 'stdio' && def.url === GOOGLE_DRIVE_MCP_URL) {
       onNotice?.(`MCP ${name}: not authorized — reconnect in Settings → Marketplace`)
       continue
     }

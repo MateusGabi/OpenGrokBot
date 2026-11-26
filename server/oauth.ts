@@ -4,6 +4,7 @@ import { OAuthStore, type OAuthEntry, type OAuthStatus } from './oauth-store.js'
 
 export const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 export const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
+export const GOOGLE_DRIVE_MCP_URL = 'https://drivemcp.googleapis.com/mcp/v1self'
 export const GOOGLE_DRIVE_SCOPES: readonly string[] = [
   'https://www.googleapis.com/auth/drive.readonly',
   'https://www.googleapis.com/auth/drive.file',
@@ -29,10 +30,19 @@ export class GoogleOAuth implements OAuthAccess {
   private readonly fetchFn: typeof fetch
   private readonly now: () => number
   private readonly inflight = new Map<string, Promise<string>>()
+  private readonly generations = new Map<string, number>()
 
   constructor(private readonly store: OAuthStore, opts: { fetch?: typeof fetch; now?: () => number } = {}) {
     this.fetchFn = opts.fetch ?? fetch
     this.now = opts.now ?? Date.now
+  }
+
+  private generation(name: string): number {
+    return this.generations.get(name) ?? 0
+  }
+
+  private bump(name: string): void {
+    this.generations.set(name, this.generation(name) + 1)
   }
 
   start(name: string, input: OAuthStartInput): { authorizationUrl: string; state: string } {
@@ -44,6 +54,7 @@ export class GoogleOAuth implements OAuthAccess {
     const state = randomUUID()
     const codeVerifier = randomBytes(32).toString('base64url')
     const codeChallenge = createHash('sha256').update(codeVerifier).digest('base64url')
+    this.bump(name)
     this.store.set(name, {
       ...(this.store.get(name) ?? {}),
       clientId: input.clientId,
@@ -77,12 +88,11 @@ export class GoogleOAuth implements OAuthAccess {
       code,
       code_verifier: entry.codeVerifier ?? '',
     })
-    const tokens = await this.tokenRequest(name, params, entry)
-    this.saveTokens(name, tokens)
-    const current = this.store.get(name)!
-    delete current.state
-    delete current.codeVerifier
-    this.store.set(name, current)
+    const tokens = await this.tokenRequest(name, params, entry, this.generation(name))
+    this.saveTokens(name, tokens, entry)
+    delete entry.state
+    delete entry.codeVerifier
+    this.store.set(name, entry)
   }
 
   status(name: string): OAuthStatus {
@@ -90,14 +100,16 @@ export class GoogleOAuth implements OAuthAccess {
   }
 
   disconnect(name: string): void {
+    this.bump(name)
     this.store.delete(name)
   }
 
   async accessToken(name: string): Promise<string | undefined> {
     const entry = this.store.get(name)
     if (!entry) return undefined
-    if (entry.accessToken && entry.expiresAt !== undefined && entry.expiresAt > this.now() + 60_000) return entry.accessToken
-    if (!entry.refreshToken) return entry.accessToken
+    if (entry.accessToken && (entry.expiresAt === undefined || entry.expiresAt > this.now() + 60_000)) return entry.accessToken
+    // Expired without a refresh token means the user must reconnect; never install a stale Bearer header.
+    if (!entry.refreshToken) return undefined
     const pending = this.inflight.get(name)
     if (pending) return pending
     const refresh = this.refresh(name).finally(() => this.inflight.delete(name))
@@ -151,18 +163,24 @@ export class GoogleOAuth implements OAuthAccess {
       grant_type: 'refresh_token',
       refresh_token: entry.refreshToken ?? '',
     })
-    const tokens = await this.tokenRequest(name, params, entry)
-    this.saveTokens(name, tokens)
-    return this.store.get(name)!.accessToken!
+    const tokens = await this.tokenRequest(name, params, entry, this.generation(name))
+    this.saveTokens(name, tokens, entry)
+    return entry.accessToken!
   }
 
-  private async tokenRequest(name: string, params: URLSearchParams, entry: OAuthEntry): Promise<{ access_token: string; refresh_token?: string; expires_in?: number }> {
+  private async tokenRequest(name: string, params: URLSearchParams, entry: OAuthEntry, generation: number): Promise<{ access_token: string; refresh_token?: string; expires_in?: number }> {
     const res = await this.fetchFn(GOOGLE_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString(),
     })
+    if (this.store.get(name) !== entry || this.generation(name) !== generation) {
+      throw new OAuthNeedsAuthError('Google authorization changed while the request was in flight.')
+    }
     const body: unknown = await res.json().catch(() => ({}))
+    if (this.store.get(name) !== entry || this.generation(name) !== generation) {
+      throw new OAuthNeedsAuthError('Google authorization changed while the request was in flight.')
+    }
     if (!res.ok) {
       const err = typeof body === 'object' && body !== null ? String((body as { error?: string }).error ?? '') : ''
       if (err === 'invalid_grant') {
@@ -178,9 +196,9 @@ export class GoogleOAuth implements OAuthAccess {
     return { access_token: parsed.access_token, refresh_token: parsed.refresh_token, expires_in: parsed.expires_in }
   }
 
-  private saveTokens(name: string, tokens: { access_token: string; refresh_token?: string; expires_in?: number }): void {
+  private saveTokens(name: string, tokens: { access_token: string; refresh_token?: string; expires_in?: number }, expected?: OAuthEntry): void {
     const entry = this.store.get(name)
-    if (!entry) return
+    if (!entry || (expected && entry !== expected)) throw new OAuthNeedsAuthError('Google credentials changed; reconnect in the Marketplace.')
     entry.accessToken = tokens.access_token
     if (tokens.refresh_token) entry.refreshToken = tokens.refresh_token
     entry.expiresAt = this.now() + (tokens.expires_in ?? 3600) * 1000
