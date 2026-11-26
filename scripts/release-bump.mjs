@@ -29,8 +29,10 @@ function git(args) {
 
 function main() {
   const lastTag = git(['tag', '--list', '--sort=-v:refname']).split(/\r?\n/).filter(Boolean)[0] ?? null
-  const subjects = git(lastTag ? ['log', `${lastTag}..HEAD`, '--pretty=%s'] : ['log', '--pretty=%s'])
-    .split(/\r?\n/)
+  // Full messages, not just subjects: BREAKING CHANGE: usually lives in the body.
+  const subjects = git(lastTag ? ['log', `${lastTag}..HEAD`, '--pretty=%B%x00'] : ['log', '--pretty=%B%x00'])
+    .split('\0')
+    .map((message) => message.trim())
     .filter(Boolean)
   const result = nextVersion(subjects, lastTag?.replace(/^v/, '') ?? null)
   if (result) process.stdout.write(`version=${result.version}\nbump=${result.bump}\n`)
