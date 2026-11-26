@@ -92,6 +92,14 @@ First start copies `team.example.json` to `team.json`. Open Settings → General
 
 > Windows note: if `node_modules/electron/dist` has no `electron.exe` after install, unzip the cached `electron-v*-win32-x64.zip` from `%LOCALAPPDATA%\electron\Cache\<hash>\` into that folder and write `electron.exe` into `node_modules/electron/path.txt`. The `npm run desktop` launcher also strips `ELECTRON_RUN_AS_NODE`, which VS Code terminals export.
 
+### Windows installer
+
+```bash
+npm run build:desktop   # produces release\OpenGrokBot Setup <version>.exe
+```
+
+The build unpacks Electron in a fresh folder under the OS temp directory and copies only the finished installer (plus `latest.yml` and the block map) into `release/`. Staging outside the repo avoids the Windows `EBUSY`/`EPERM` failure where an editor, search indexer or file preview keeps `release\win-unpacked\resources\default_app.asar` open while electron-builder renames `win-unpacked.tmp`.
+
 ## How providers work
 
 | | Claude | Codex | Gemini | API |
