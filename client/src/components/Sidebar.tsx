@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { orderConversations } from '../../../shared/conversationOrder'
 import type { ApprovalRequest, Conversation, Team } from '../../../shared/types'
 import { conversationAvatars, conversationTitle, formatTime, personFor } from '../people'
+import type { Theme } from '../theme'
 import { lastRead } from '../unread'
 import { Avatar, AvatarCluster } from './Avatar'
 
@@ -18,9 +19,11 @@ interface SidebarProps {
   onSettings: () => void
   onNewChat: () => void
   onSearch: () => void
+  theme: Theme
+  onToggleTheme: () => void
 }
 
-export function Sidebar({ team, conversations, activeId, busy, approvals, readTick, onSelect, onMenu, onSettings, onNewChat, onSearch }: SidebarProps) {
+export function Sidebar({ team, conversations, activeId, busy, approvals, readTick, onSelect, onMenu, onSettings, onNewChat, onSearch, theme, onToggleTheme }: SidebarProps) {
   const [q, setQ] = useState('')
   const [showHidden, setShowHidden] = useState(false)
   const owner = personFor(team, 'user')
@@ -89,6 +92,15 @@ export function Sidebar({ team, conversations, activeId, busy, approvals, readTi
   return (
     <aside className="sidebar">
       <div className="sidebar-top">
+        <button
+          type="button"
+          className="icon-button"
+          title={theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
+          aria-label={theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
+          onClick={onToggleTheme}
+        >
+          {theme === 'light' ? <MoonIcon /> : <SunIcon />}
+        </button>
         <button type="button" className="icon-button" title="Search (Ctrl+K)" aria-label="Search" onClick={onSearch}>
           <SearchIcon />
         </button>
@@ -173,6 +185,23 @@ function MoreIcon() {
       <circle cx="4" cy="10" r="1.8" />
       <circle cx="10" cy="10" r="1.8" />
       <circle cx="16" cy="10" r="1.8" />
+    </svg>
+  )
+}
+
+function SunIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </svg>
+  )
+}
+
+function MoonIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z" />
     </svg>
   )
 }

@@ -11,6 +11,7 @@ import { Settings, type SettingsSection } from './components/Settings'
 import { Sidebar } from './components/Sidebar'
 import { personFor } from './people'
 import { initialState, reducer } from './state'
+import { useTheme } from './theme'
 import { markRead, markUnread } from './unread'
 
 interface MenuState {
@@ -33,6 +34,7 @@ export function App() {
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null)
   const [jumpTo, setJumpTo] = useState<string | null>(null)
   const [readTick, setReadTick] = useState(0)
+  const { theme, toggle } = useTheme()
   const latest = useRef({ activeId, state })
   latest.current = { activeId, state }
 
@@ -193,6 +195,8 @@ export function App() {
         onSettings={() => setSettings('general')}
         onNewChat={() => setChatEditor(null)}
         onSearch={() => setSearch(true)}
+        theme={theme}
+        onToggleTheme={toggle}
       />
       <main className="main">
         <ChatView
