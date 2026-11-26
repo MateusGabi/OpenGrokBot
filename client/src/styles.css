@@ -53,6 +53,7 @@
   --warning-border: rgba(245, 158, 11, 0.4);
   --warning-border-strong: rgba(245, 158, 11, 0.5);
   --success: #22c55e;
+  --success-soft: rgba(34, 197, 94, 0.12);
 
   --fill-hover: rgba(255, 255, 255, 0.04);
   --fill: rgba(255, 255, 255, 0.08);
@@ -128,6 +129,7 @@
   --warning-border: rgba(217, 119, 6, 0.35);
   --warning-border-strong: rgba(217, 119, 6, 0.45);
   --success: #15803d;
+  --success-soft: rgba(21, 128, 61, 0.12);
 
   --fill-hover: rgba(24, 24, 27, 0.04);
   --fill: rgba(24, 24, 27, 0.06);
