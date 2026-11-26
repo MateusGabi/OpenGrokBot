@@ -10,6 +10,9 @@ import { CRON_PRESETS, nextRun } from './cron.js'
 import { emit, subscribe } from './events.js'
 import { mimeOf } from './files.js'
 import { Memory } from './memory.js'
+import { GoogleOAuth } from './oauth.js'
+import { createOAuthRoutes } from './oauth-routes.js'
+import { OAuthStore } from './oauth-store.js'
 import { Orchestrator } from './orchestrator.js'
 import { providerStatuses } from './providers/index.js'
 import { Routines } from './routines.js'
@@ -37,13 +40,14 @@ if (!existsSync(teamFile)) copyFileSync(path.join(root, 'team.example.json'), te
 const dataDir = process.env.OPENGROKBOT_DATA ? path.resolve(process.env.OPENGROKBOT_DATA) : path.join(root, 'data')
 const uploadsDir = path.join(dataDir, 'uploads')
 mkdirSync(uploadsDir, { recursive: true })
+const oauth = new GoogleOAuth(new OAuthStore(path.join(dataDir, 'mcp-oauth.json')))
 let team = loadTeam(teamFile)
 const store = new Store(dataDir)
 store.seed(team)
 const account = new Account(path.join(dataDir, 'account.json'))
 const approvals = new Approvals()
 const memory = new Memory(dataDir)
-const orchestrator = new Orchestrator(() => team, store, account, approvals, memory, (p) => allowedFile(p))
+const orchestrator = new Orchestrator(() => team, store, account, approvals, memory, (p) => allowedFile(p), oauth)
 const routines = new Routines(dataDir, (r) => orchestrator.runRoutine(r))
 routines.start()
 
@@ -53,7 +57,7 @@ app.disable('x-powered-by')
 // ---- remote access (optional) ----
 const COOKIE = 'ogb_token'
 app.use((req, res, next) => {
-  if (!TOKEN) return next()
+  if (!TOKEN || (req.path.startsWith('/api/mcp/oauth/') && req.path.endsWith('/callback'))) return next()
   const q = typeof req.query.token === 'string' ? req.query.token : null
   if (q === TOKEN) {
     res.setHeader('Set-Cookie', `${COOKIE}=${encodeURIComponent(TOKEN)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 24 * 365}`)
@@ -72,6 +76,7 @@ app.use((req, res, next) => {
 })
 
 app.use(express.json({ limit: '2mb' }))
+app.use('/api/mcp/oauth', createOAuthRoutes(oauth, (name) => name in team.mcpServers))
 
 /** API keys never leave the server. */
 function publicTeam(t: Team): Team {
@@ -419,6 +424,7 @@ app.delete('/api/team/mcp/:name', (req, res) => {
   try {
     const agents = team.agents.map((a) => ({ ...a, mcpServers: a.mcpServers.filter((s) => s !== name) }))
     applyTeam(parseTeam({ ...team, mcpServers: rest, agents }, root))
+    oauth.disconnect(name)
     res.json({ ok: true })
   } catch (err) {
     teamError(res, err)

@@ -5,7 +5,7 @@ import type { RunTurnParams, TurnResult } from './types.js'
 /** Opencode's OpenAI-compatible API with the employee's MCP tools attached. */
 export async function runOpencodeTurn(params: RunTurnParams): Promise<TurnResult> {
   const { agent, handlers } = params
-  const bundle = await openMcpServers(params.team, agent, handlers.onActivity)
+  const bundle = await openMcpServers(params.team, agent, handlers.onActivity, params.oauth)
   try {
     const note = agent.mcpServers.length > 0 ? ` You also have MCP tools from: ${agent.mcpServers.join(', ')}.` : ''
     return await runOpenAiCompatibleTurn(params, bundle.tools, bundle.callTool, note)

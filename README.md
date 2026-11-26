@@ -150,6 +150,16 @@ OpenGrokBot هو بديل مجاني ومفتوح المصدر لـ Grok Bot (ب
 
 Right-click any chat for Pin, Rename/Edit chat, Edit profile, Mute, Duplicate, Export as Markdown, Clear, Delete.
 
+### Google Drive MCP (OAuth)
+
+The Marketplace entry for Google Drive uses Google's official remote MCP server. It needs an OAuth client you create yourself:
+
+1. In Google Cloud, create or select a project and enable **Drive API** and **Drive MCP API** (`drivemcp.googleapis.com`).
+2. Create an OAuth client of type **Web application**, tick **Use this client for an AI-powered agent**, and register the redirect URI shown in the add dialog: `<app origin>/api/mcp/oauth/google-drive/callback`. If the app type is External, add your Google account as a test user.
+3. In Settings → Marketplace, click **Add** on Google Drive, paste the Client ID and Client Secret, then **Authorize with Google** and finish the sign-in in the popup. The card shows `Conectado` when done. Tick the server in an employee's profile (Claude or “Opencode + MCP”) to give them the tools.
+
+The redirect URI comes from the origin you browse: `http://127.0.0.1:4310` normally, `http://localhost:5180` with `npm run dev`, or your VPS/HTTPS origin. Register every origin you use on the same OAuth client or the code exchange will fail. Removing the server locally does not revoke Google consent — do that in your Google Account if needed. Tokens live server-side in `data/mcp-oauth.json` and refresh automatically; the Claude token is refreshed per turn, so a turn lasting over an hour could expire mid-turn.
+
 ## `team.json`
 
 Everything the UI edits lives here. Safe to edit by hand; restart afterwards.
