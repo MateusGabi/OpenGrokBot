@@ -281,11 +281,32 @@ textarea {
   border-radius: 14px;
   text-align: left;
   width: 100%;
-  transition: background 0.12s;
+  transform-origin: left center;
+  transition: background 0.12s, transform 0.15s ease-out;
 }
 
 .conversation:hover {
   background: var(--bg-hover);
+}
+
+@media (hover: hover) {
+  .conversation:hover {
+    transform: scale(1.02);
+  }
+
+  /* "Where will they click?" — a quick sidelong, thoughtful glance. */
+  .conversation:hover .avatar-eyes {
+    transform: translate(0.9px, -1.7px);
+  }
+
+  .conversation:hover .avatar-mouth {
+    opacity: 0;
+  }
+
+  .conversation:hover .avatar-brow,
+  .conversation:hover .avatar-mouth-thinking {
+    opacity: 1;
+  }
 }
 
 .conversation.is-active {
@@ -388,6 +409,22 @@ textarea {
   flex-shrink: 0;
   vertical-align: middle;
   border-radius: 50%;
+}
+
+.avatar-eyes {
+  transform: translate(var(--eye-x, 0px), var(--eye-y, 0px));
+  transition: transform 0.12s ease-out;
+}
+
+.avatar-brow,
+.avatar-mouth,
+.avatar-mouth-thinking {
+  transition: opacity 0.12s ease-out;
+}
+
+.avatar-brow,
+.avatar-mouth-thinking {
+  opacity: 0;
 }
 
 .avatar-owner {
@@ -924,4 +961,18 @@ textarea {
 
 .composer textarea {
   unicode-bidi: plaintext;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-eyes,
+  .avatar-brow,
+  .avatar-mouth,
+  .avatar-mouth-thinking,
+  .conversation {
+    transition: none;
+  }
+
+  .conversation:hover {
+    transform: none;
+  }
 }
