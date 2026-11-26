@@ -47,6 +47,10 @@ async function main() {
     await build({
       win: ['nsis'],
       projectDir,
+      // CI sets CI=true, which makes electron-builder try to publish to GitHub on
+      // its own. That needs a token and aborts before publishArtifacts() runs;
+      // the release workflow owns publishing via `gh release create`.
+      publish: 'never',
       config: { directories: { output: stagingOutput } },
     });
     await publishArtifacts();
