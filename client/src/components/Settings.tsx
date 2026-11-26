@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { formatArgs, parseArgs } from '../../../shared/args'
 import { RATE_LIMIT_LABELS } from '../../../shared/catalog'
+import type { VersionInfo } from '../../../shared/types'
+import { DOWNLOAD_URL, REPO_URL, updateStatus, type UpdateStatus } from '../../../shared/version'
 import type { AccountStatus, AutoReviewRule, Conversation, McpServerDef, Routine, Team, TeamSettings, UsageSummary, UsageTotals } from '../../../shared/types'
 import { deleteMcpServer, putMcpServer, putSettings, refreshAccount } from '../api'
 import { formatCost, formatRelative, formatTokens, modelLabel } from '../format'
@@ -10,9 +12,9 @@ import { Avatar } from './Avatar'
 import { Providers } from './Providers'
 import { Routines } from './Routines'
 import { Skills } from './Skills'
-import { exportAgentUrl, importAgent } from '../api'
+import { exportAgentUrl, fetchVersion, importAgent } from '../api'
 
-export type SettingsSection = 'general' | 'team' | 'providers' | 'marketplace' | 'routines' | 'skills' | 'usage' | 'account'
+export type SettingsSection = 'general' | 'team' | 'providers' | 'marketplace' | 'routines' | 'skills' | 'usage' | 'account' | 'about'
 
 interface SettingsProps {
   team: Team
@@ -35,6 +37,7 @@ const NAV: { id: SettingsSection; label: string; icon: string }[] = [
   { id: 'skills', label: 'Skills', icon: '🎯' },
   { id: 'usage', label: 'Usage', icon: '📊' },
   { id: 'account', label: 'Claude account', icon: '🔑' },
+  { id: 'about', label: 'About', icon: 'ℹ️' },
 ]
 
 export function Settings(props: SettingsProps) {
@@ -64,6 +67,7 @@ export function Settings(props: SettingsProps) {
           {section === 'skills' && <Skills team={props.team} />}
           {section === 'usage' && <Usage {...props} />}
           {section === 'account' && <AccountSection {...props} />}
+          {section === 'about' && <About />}
         </div>
       </div>
     </div>
@@ -599,6 +603,60 @@ function AccountSection({ account }: SettingsProps) {
         )}
         {account.updatedAt && <div className="muted small">Last update {formatRelative(account.updatedAt)}</div>}
       </Card>
+    </>
+  )
+}
+
+/* ---------- About ---------- */
+
+function About() {
+  const [info, setInfo] = useState<VersionInfo | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = () => {
+    setError(null)
+    setInfo(null)
+    void fetchVersion()
+      .then(setInfo)
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)))
+  }
+
+  useEffect(load, [])
+
+  const status = updateStatus(info, error !== null)
+  const labels: Record<UpdateStatus, string> = {
+    checking: 'Checking…',
+    upToDate: 'Up to date',
+    updateAvailable: info?.latest ? `Update available · v${info.latest}` : 'Update available',
+    unknown: "Couldn't check for updates",
+  }
+  const badge = status === 'upToDate' ? 'badge badge-success' : status === 'updateAvailable' ? 'badge badge-warn' : 'badge'
+
+  return (
+    <>
+      <h1>About</h1>
+      <p className="lead">OpenGrokBot — your own AI company in a group chat.</p>
+      <Card>
+        <Row title="Current version" hint="The version bundled with this install.">
+          <span className="about-version">v{info?.current ?? '…'}</span>
+        </Row>
+        <Row title="Update status" hint={error ?? 'Compares your version with the one published on GitHub.'}>
+          <span className={badge}>{labels[status]}</span>
+        </Row>
+        <Row title="Check for updates" hint="Runs the check again.">
+          <button type="button" className="btn" onClick={load}>
+            Check now
+          </button>
+        </Row>
+      </Card>
+      <div className="actions">
+        <a className="btn btn-primary" href={info?.downloadUrl ?? DOWNLOAD_URL} target="_blank" rel="noopener noreferrer">
+          Download update
+        </a>
+        <a className="btn" href={info?.repoUrl ?? REPO_URL} target="_blank" rel="noopener noreferrer">
+          View on GitHub
+        </a>
+      </div>
     </>
   )
 }

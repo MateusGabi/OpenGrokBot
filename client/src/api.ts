@@ -1,4 +1,4 @@
-import type { AccountStatus, Agent, AppState, Attachment, Conversation, McpServerDef, Message, ProviderDef, ProviderStatus, Routine, RoutineRun, Skill, TeamSettings } from '../../shared/types'
+import type { AccountStatus, Agent, AppState, Attachment, Conversation, McpServerDef, Message, ProviderDef, ProviderStatus, Routine, RoutineRun, Skill, TeamSettings, VersionInfo } from '../../shared/types'
 
 async function call<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init)
@@ -13,6 +13,10 @@ function json(method: string, body: unknown): RequestInit {
 
 export function fetchState(): Promise<AppState> {
   return call<AppState>('/api/state')
+}
+
+export function fetchVersion(): Promise<VersionInfo> {
+  return call<VersionInfo>('/api/version')
 }
 
 export async function sendMessage(conversationId: string, text: string): Promise<Message> {

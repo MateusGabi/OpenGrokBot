@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import type { VersionInfo } from '../shared/types.js'
+import { updateStatus } from '../shared/version.js'
 import { VersionChecker, compareVersions } from './version.js'
 
 test('compareVersions orders semver-like strings', () => {
@@ -34,6 +36,18 @@ test('info survives network failure and malformed remote json', async () => {
   const malformed = await new VersionChecker('0.5.0', async () => ({})).info()
   assert.equal(malformed.latest, null)
   assert.equal(malformed.upToDate, null)
+})
+
+function info(patch: Partial<VersionInfo>): VersionInfo {
+  return { current: '0.5.0', latest: null, upToDate: null, checkedAt: 0, repoUrl: '', downloadUrl: '', ...patch }
+}
+
+test('updateStatus maps version info to the status shown in the About screen', () => {
+  assert.equal(updateStatus(null, false), 'checking')
+  assert.equal(updateStatus(null, true), 'unknown')
+  assert.equal(updateStatus(info({ upToDate: true, latest: '0.5.0' }), false), 'upToDate')
+  assert.equal(updateStatus(info({ upToDate: false, latest: '0.6.0' }), false), 'updateAvailable')
+  assert.equal(updateStatus(info({ upToDate: null }), false), 'unknown')
 })
 
 test('info caches the remote version for ten minutes', async () => {
