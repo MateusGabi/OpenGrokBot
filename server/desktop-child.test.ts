@@ -26,3 +26,12 @@ test('electron shell surfaces spawn errors instead of only timing out', () => {
   assert.match(source, /server\.on\('error'/)
   assert.match(source, /childOptions\(/)
 })
+
+test('electron shell manages one server per office', () => {
+  const source = readFileSync(path.join(root, 'desktop/main.cjs'), 'utf8')
+  assert.match(source, /loadOffices\(/)
+  assert.match(source, /startupId\(/)
+  assert.match(source, /offices-preload\.cjs/)
+  assert.match(source, /setApplicationMenu\(/)
+  assert.match(source, /page-title-updated/)
+})
