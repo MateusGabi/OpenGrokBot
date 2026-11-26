@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { formatArgs, parseArgs } from '../../../shared/args'
 import { RATE_LIMIT_LABELS } from '../../../shared/catalog'
+import type { VersionInfo } from '../../../shared/types'
+import { DOWNLOAD_URL, REPO_URL, updateStatus, type UpdateStatus } from '../../../shared/version'
 import type { AccountStatus, AutoReviewRule, Conversation, McpServerDef, Routine, Team, TeamSettings, UsageSummary, UsageTotals } from '../../../shared/types'
 import { deleteMcpServer, putMcpServer, putSettings, refreshAccount } from '../api'
 import { formatCost, formatRelative, formatTokens, modelLabel } from '../format'
@@ -10,9 +12,9 @@ import { Avatar } from './Avatar'
 import { Providers } from './Providers'
 import { Routines } from './Routines'
 import { Skills } from './Skills'
-import { exportAgentUrl, importAgent } from '../api'
+import { exportAgentUrl, fetchVersion, importAgent } from '../api'
 
-export type SettingsSection = 'general' | 'team' | 'providers' | 'marketplace' | 'routines' | 'skills' | 'usage' | 'account'
+export type SettingsSection = 'general' | 'team' | 'providers' | 'marketplace' | 'routines' | 'skills' | 'usage' | 'account' | 'about'
 
 interface SettingsProps {
   team: Team
@@ -35,6 +37,7 @@ const NAV: { id: SettingsSection; label: string; icon: string }[] = [
   { id: 'skills', label: 'Skills', icon: '🎯' },
   { id: 'usage', label: 'Usage', icon: '📊' },
   { id: 'account', label: 'Claude account', icon: '🔑' },
+  { id: 'about', label: 'About', icon: 'ℹ️' },
 ]
 
 export function Settings(props: SettingsProps) {
@@ -64,6 +67,7 @@ export function Settings(props: SettingsProps) {
           {section === 'skills' && <Skills team={props.team} />}
           {section === 'usage' && <Usage {...props} />}
           {section === 'account' && <AccountSection {...props} />}
+          {section === 'about' && <About />}
         </div>
       </div>
     </div>
@@ -599,6 +603,94 @@ function AccountSection({ account }: SettingsProps) {
         )}
         {account.updatedAt && <div className="muted small">Last update {formatRelative(account.updatedAt)}</div>}
       </Card>
+    </>
+  )
+}
+
+/* ---------- About ---------- */
+
+/** Arrow leaving a box: this control opens a page outside the app. */
+function ExternalIcon() {
+  return (
+    <svg className="about-external" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <path d="M15 3h6v6" />
+      <path d="M10 14 21 3" />
+    </svg>
+  )
+}
+
+function About() {
+  const [info, setInfo] = useState<VersionInfo | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [checking, setChecking] = useState(false)
+
+  const load = () => {
+    setError(null)
+    setChecking(true)
+    void fetchVersion()
+      .then(setInfo)
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)))
+      .finally(() => setChecking(false))
+  }
+
+  useEffect(load, [])
+
+  const status = updateStatus(info, error !== null)
+  const labels: Record<UpdateStatus, string> = {
+    checking: 'Checking…',
+    upToDate: 'Up to date',
+    updateAvailable: info?.latest ? `Update available · v${info.latest}` : 'Update available',
+    unknown: "Couldn't check for updates",
+  }
+  const detail =
+    checking
+      ? 'Checking GitHub…'
+      : error ??
+        (status === 'upToDate'
+          ? "You're running the latest version."
+          : status === 'updateAvailable' && info?.latest
+            ? `Version ${info.latest} is available to download.`
+            : "We couldn't reach GitHub. Try again in a moment.")
+  const badge = status === 'upToDate' ? 'badge badge-success' : status === 'updateAvailable' ? 'badge badge-warn' : 'badge'
+
+  return (
+    <>
+      <h1>About</h1>
+      <Card>
+        <div className="about-hero">
+          <img className="about-mark" src="/icon.svg" alt="" />
+          <div className="about-identity">
+            <div className="about-name">OpenGrokBot</div>
+            <div className="about-tagline">Your own AI company in a group chat.</div>
+          </div>
+          <span className="about-version">v{info?.current ?? '…'}</span>
+        </div>
+        <div className="about-updates">
+          <div className="about-updates-copy">
+            <div className="row-title">Software updates</div>
+            <div className="row-hint">{detail}</div>
+          </div>
+          <div className="about-updates-control">
+            <span className={badge}>{labels[status]}</span>
+            <button type="button" className="btn" disabled={checking} onClick={load}>
+              {checking ? 'Checking…' : 'Check now'}
+            </button>
+          </div>
+        </div>
+      </Card>
+      <div className="actions about-actions">
+        <a className="btn btn-primary" href={info?.downloadUrl ?? DOWNLOAD_URL} target="_blank" rel="noopener noreferrer">
+          Download update
+          <ExternalIcon />
+          <span className="sr-only">(opens in a new tab)</span>
+        </a>
+        <a className="btn" href={info?.repoUrl ?? REPO_URL} target="_blank" rel="noopener noreferrer">
+          View on GitHub
+          <ExternalIcon />
+          <span className="sr-only">(opens in a new tab)</span>
+        </a>
+      </div>
     </>
   )
 }
