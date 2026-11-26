@@ -11,6 +11,11 @@ const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')) as
   devDependencies?: Record<string, string>
 }
 const gitignore = readFileSync(path.join(root, '.gitignore'), 'utf8')
+const buildWrapper = readFileSync(path.join(root, 'desktop/build.cjs'), 'utf8')
+
+test('desktop build never publishes by itself', () => {
+  assert.match(buildWrapper, /publish:\s*'never'/, 'electron-builder must not auto-publish on CI; the workflow owns the release')
+})
 
 test('package is configured to build a Windows installer', () => {
   assert.equal(pkg.main, 'desktop/main.cjs')
