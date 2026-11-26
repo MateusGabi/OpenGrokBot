@@ -51,3 +51,13 @@ test('manager puts a focused new-office form above the list', () => {
   assert.match(renderer, /input\.focus\(\)/)
   assert.match(renderer, /Escape/)
 })
+
+test('manager uses a Notion-style sidebar and detail page', () => {
+  const html = readFileSync(path.join(root, 'desktop', 'offices.html'), 'utf8')
+  const css = readFileSync(path.join(root, 'desktop', 'offices.css'), 'utf8')
+  assert.ok(html.indexOf('class="sidebar"') < html.indexOf('class="main"'), 'sidebar must come before the page canvas')
+  assert.match(html, /id="detail"/)
+  assert.match(html, /Quick find/)
+  assert.match(css, /grid-template-columns: 248px 1fr/)
+  assert.match(css, /font-size: 40px/)
+})
