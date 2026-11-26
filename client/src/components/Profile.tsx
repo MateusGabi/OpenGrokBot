@@ -290,7 +290,7 @@ export function Profile({ team, agentId, usage, onClose, onSaved }: ProfileProps
           </label>
         </section>
 
-        {kind === 'claude' && (
+        {(kind === 'claude' || kind === 'opencode') && (
           <section className="form-section">
             <h3>MCP servers</h3>
             {Object.keys(team.mcpServers).length === 0 ? (

@@ -34,6 +34,15 @@ export interface RunTurnParams {
 
 export type ProviderRunner = (params: RunTurnParams) => Promise<TurnResult>
 
+/** A tool supplied by an external source (e.g. MCP), exposed to the chat model as a function tool. */
+export interface ExternalTool {
+  name: string
+  description: string
+  parameters: Record<string, unknown>
+}
+
+export type ExternalToolRunner = (name: string, args: Record<string, unknown>, signal: AbortSignal) => Promise<string>
+
 export function emptyUsage(model: string): MessageUsage {
   return { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheCreationTokens: 0, costUsd: 0, durationMs: 0, numTurns: 1, model }
 }

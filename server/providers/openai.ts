@@ -1,7 +1,7 @@
 import { needsApproval } from '../approvals.js'
 import { buildSystemPrompt, buildTurnPrompt, stripSkip } from '../prompt.js'
 import { LOCAL_TOOLS, runLocalTool, summarizeLocalTool } from './localtools.js'
-import { emptyUsage, type RunTurnParams, type TurnResult } from './types.js'
+import { emptyUsage, type ExternalTool, type ExternalToolRunner, type RunTurnParams, type TurnResult } from './types.js'
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant' | 'tool'
@@ -22,18 +22,23 @@ interface StreamChunk {
   error?: { message?: string }
 }
 
-/**
- * Any OpenAI-compatible chat API (Kimi, OpenRouter, DeepSeek, Groq, xAI, Ollama…). Streams the
- * reply and runs a small tool loop with local file/shell tools when the employee has tools.
- */
+/** Any OpenAI-compatible chat API with no external tools. */
 export async function runOpenAiTurn(params: RunTurnParams): Promise<TurnResult> {
+  return runOpenAiCompatibleTurn(params, [], undefined, '')
+}
+
+/**
+ * Streams the reply and runs a tool loop with local file/shell tools plus any injected tools
+ * (e.g. MCP tools exposed by the opencode provider).
+ */
+export async function runOpenAiCompatibleTurn(params: RunTurnParams, extraTools: ExternalTool[], runExtraTool: ExternalToolRunner | undefined, systemNote: string): Promise<TurnResult> {
   const { team, conversation, agent, provider, signal, handlers, note, notes } = params
   const started = Date.now()
   const cwd = agent.cwd ?? team.workspace
   const allowOutside = agent.autoApproveTools || agent.permissionMode === 'bypassPermissions'
   const tools = LOCAL_TOOLS.filter((t) => agent.tools.includes(t.claudeName))
   const messages: ChatMessage[] = [
-    { role: 'system', content: buildSystemPrompt(team, conversation, agent, '', notes ?? '') },
+    { role: 'system', content: buildSystemPrompt(team, conversation, agent, systemNote, notes ?? '') },
     { role: 'user', content: buildTurnPrompt(team, conversation, agent, false, note) },
   ]
   const usage = emptyUsage(agent.model)
@@ -50,7 +55,11 @@ export async function runOpenAiTurn(params: RunTurnParams): Promise<TurnResult> 
       stream: true,
       stream_options: { include_usage: true },
     }
-    if (tools.length > 0) body.tools = tools.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.parameters } }))
+    const functionTools = [
+      ...tools.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.parameters } })),
+      ...extraTools.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.parameters } })),
+    ]
+    if (functionTools.length > 0) body.tools = functionTools
 
     let res: Response
     try {
@@ -139,12 +148,14 @@ export async function runOpenAiTurn(params: RunTurnParams): Promise<TurnResult> 
       } catch {
         args = {}
       }
-      handlers.onActivity(summarizeLocalTool(call.function.name, args))
+      const isExtra = extraTools.some((t) => t.name === call.function.name)
+      handlers.onActivity(isExtra ? call.function.name : summarizeLocalTool(call.function.name, args))
       let result: string
-      const claudeName = LOCAL_TOOLS.find((t) => t.name === call.function.name)?.claudeName ?? call.function.name
+      const claudeName = isExtra ? call.function.name : (LOCAL_TOOLS.find((t) => t.name === call.function.name)?.claudeName ?? call.function.name)
       const mustAsk = !agent.autoApproveTools && handlers.onToolPermission !== undefined && needsApproval(agent, claudeName)
       try {
         if (mustAsk && !(await handlers.onToolPermission?.(claudeName, args))) result = 'Denied by the boss. Explain what you wanted to do and stop.'
+        else if (isExtra) result = runExtraTool ? await runExtraTool(call.function.name, args, signal) : `Error: no runner for ${call.function.name}`
         else result = await runLocalTool(call.function.name, args, cwd, allowOutside, signal)
       } catch (err) {
         result = `Error: ${err instanceof Error ? err.message : String(err)}`

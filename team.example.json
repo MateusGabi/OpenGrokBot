@@ -268,7 +268,13 @@
     "notifications": true,
     "autoReview": []
   },
-  "providers": {},
+  "providers": {
+    "opencode2": {
+      "kind": "opencode",
+      "label": "Opencode + MCP",
+      "baseUrl": "https://opencode.ai/inference/openai/v1"
+    }
+  },
   "skills": {
     "standup": {
       "name": "Standup",

@@ -14,6 +14,7 @@ export const MODEL_SUGGESTIONS: Record<ProviderKind, string[]> = {
   codex: ['default', 'gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5'],
   gemini: ['default', 'gemini-3-pro-preview', 'gemini-3-flash-preview', 'gemini-2.5-pro', 'gemini-2.5-flash'],
   openai: [],
+  opencode: [],
 }
 
 export const PROVIDER_KINDS: { id: ProviderKind; label: string; hint: string }[] = [
@@ -21,6 +22,7 @@ export const PROVIDER_KINDS: { id: ProviderKind; label: string; hint: string }[]
   { id: 'codex', label: 'Codex CLI', hint: 'OpenAI. Uses your ChatGPT / Codex subscription login (`codex login`). Full coding tools.' },
   { id: 'gemini', label: 'Gemini CLI', hint: 'Google. Signs in with your Google account, the same one Antigravity uses. Full coding tools.' },
   { id: 'openai', label: 'API (OpenAI-compatible)', hint: 'Any chat API: Kimi, OpenRouter, DeepSeek, Groq, xAI Grok, Ollama… Chat plus built-in file/shell tools.' },
+  { id: 'opencode', label: 'Opencode + MCP', hint: 'Opencode OpenAI-compatible API with the employee’s MCP servers (stdio, http, sse).' },
 ]
 
 /** Built-in defaults that always exist in team.providers. */
@@ -51,14 +53,14 @@ export const EFFORTS: { id: Effort; label: string }[] = [
 ]
 
 export const TOOLS: { id: string; label: string; hint: string; kinds: ProviderKind[] }[] = [
-  { id: 'Read', label: 'Read', hint: 'Read files', kinds: ['claude', 'codex', 'gemini', 'openai'] },
-  { id: 'Glob', label: 'Glob', hint: 'Find files by pattern', kinds: ['claude', 'codex', 'gemini', 'openai'] },
-  { id: 'Grep', label: 'Grep', hint: 'Search file contents', kinds: ['claude', 'codex', 'gemini', 'openai'] },
-  { id: 'Edit', label: 'Edit', hint: 'Edit files', kinds: ['claude', 'codex', 'gemini', 'openai'] },
-  { id: 'Write', label: 'Write', hint: 'Create files', kinds: ['claude', 'codex', 'gemini', 'openai'] },
-  { id: 'Bash', label: 'Bash', hint: 'Run shell commands', kinds: ['claude', 'codex', 'gemini', 'openai'] },
+  { id: 'Read', label: 'Read', hint: 'Read files', kinds: ['claude', 'codex', 'gemini', 'openai', 'opencode'] },
+  { id: 'Glob', label: 'Glob', hint: 'Find files by pattern', kinds: ['claude', 'codex', 'gemini', 'openai', 'opencode'] },
+  { id: 'Grep', label: 'Grep', hint: 'Search file contents', kinds: ['claude', 'codex', 'gemini', 'openai', 'opencode'] },
+  { id: 'Edit', label: 'Edit', hint: 'Edit files', kinds: ['claude', 'codex', 'gemini', 'openai', 'opencode'] },
+  { id: 'Write', label: 'Write', hint: 'Create files', kinds: ['claude', 'codex', 'gemini', 'openai', 'opencode'] },
+  { id: 'Bash', label: 'Bash', hint: 'Run shell commands', kinds: ['claude', 'codex', 'gemini', 'openai', 'opencode'] },
   { id: 'WebSearch', label: 'Web search', hint: 'Search the web', kinds: ['claude', 'codex', 'gemini'] },
-  { id: 'WebFetch', label: 'Web fetch', hint: 'Read web pages', kinds: ['claude', 'openai'] },
+  { id: 'WebFetch', label: 'Web fetch', hint: 'Read web pages', kinds: ['claude', 'openai', 'opencode'] },
   { id: 'Task', label: 'Subagents', hint: 'Spawn Claude Code subagents for big jobs', kinds: ['claude'] },
   { id: 'NotebookEdit', label: 'Notebooks', hint: 'Edit Jupyter notebooks', kinds: ['claude'] },
 ]
