@@ -3,6 +3,7 @@ import { runClaudeTurn } from './claude.js'
 import { runCodexTurn } from './codex.js'
 import { runGeminiTurn } from './gemini.js'
 import { listOpenAiModels, runOpenAiTurn } from './openai.js'
+import { runOpencodeTurn } from './opencode.js'
 import type { ProviderRunner, RunTurnParams, TurnResult } from './types.js'
 import type { ProviderDef, ProviderKind, ProviderStatus, Team } from '../../shared/types.js'
 
@@ -11,7 +12,7 @@ const RUNNERS: Record<ProviderKind, ProviderRunner> = {
   codex: runCodexTurn,
   gemini: runGeminiTurn,
   openai: runOpenAiTurn,
-  opencode: runOpenAiTurn,
+  opencode: runOpencodeTurn,
 }
 
 /** Providers whose CLI keeps a resumable session id. */
