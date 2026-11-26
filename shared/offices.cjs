@@ -161,6 +161,12 @@ function removeOffice(stateRoot, id, opts = {}) {
   if (opts.deleteData === true) fs.rmSync(entry.dir, { recursive: true, force: true })
 }
 
+function assertOfficeDir(office) {
+  if (!office || !fs.existsSync(office.dir)) {
+    throw new OfficesError(`offices: directory "${office?.dir ?? ''}" is missing; restore it or remove the office`)
+  }
+}
+
 function startupId(registry) {
   const exists = (entry) => !!entry && fs.existsSync(entry.dir)
   const last = registry.offices.find((o) => o.id === registry.lastId)
@@ -191,6 +197,7 @@ module.exports = {
   addOffice,
   renameOffice,
   removeOffice,
+  assertOfficeDir,
   startupId,
   officeEnv,
   officeUrl,

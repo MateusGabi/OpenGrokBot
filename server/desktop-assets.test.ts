@@ -34,3 +34,8 @@ test('offices manager screen is self-contained and offline', () => {
     assert.match(preload, new RegExp(name))
   }
 })
+
+test('manager asks for a name when adding an existing office', () => {
+  const renderer = readFileSync(path.join(root, 'desktop', 'offices.cjs'), 'utf8')
+  assert.match(renderer, /offices\.add\(dir\.trim\(\), name\)/)
+})

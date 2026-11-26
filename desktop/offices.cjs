@@ -53,8 +53,11 @@ function row(office, active) {
     }),
     action('Add existing…', async () => {
       const dir = window.prompt('Folder containing team.json')
-      if (dir && dir.trim()) {
-        await window.offices.add(dir.trim())
+      if (!dir || !dir.trim()) return
+      const suggested = dir.trim().split(/[\\/]/).filter(Boolean).pop() ?? 'Office'
+      const name = window.prompt('Office name', suggested)
+      if (name && name.trim()) {
+        await window.offices.add(dir.trim(), name)
         await render()
       }
     }),

@@ -57,7 +57,13 @@ function rebuildMenu() {
     label: office.name,
     type: 'radio',
     checked: running.has(office.id),
-    click: () => openOffice(office),
+    click: () => {
+      try {
+        openOffice(office)
+      } catch (err) {
+        dialog.showErrorBox('OpenGrokBot', err instanceof Error ? err.message : String(err))
+      }
+    },
   }))
   Menu.setApplicationMenu(
     Menu.buildFromTemplate([
@@ -70,7 +76,7 @@ function rebuildMenu() {
   )
 }
 
-function stopOffice(id, closeWindow = true) {
+function stopOffice(id, closeWindow = true, resetLastId = true) {
   const item = running.get(id)
   if (!item) return
   running.delete(id)
@@ -79,7 +85,7 @@ function stopOffice(id, closeWindow = true) {
     item.win.close()
   }
   if (item.server && item.server.exitCode === null) item.server.kill()
-  if (registry.lastId === id) {
+  if (resetLastId && registry.lastId === id) {
     registry.lastId = 'default'
     persist()
   }
@@ -92,7 +98,7 @@ function openOffice(office) {
     current.win.focus()
     return current
   }
-  mkdirSync(office.dir, { recursive: true })
+  registryLib.assertOfficeDir(office)
   const options = childOptions(office.port, office.dir, { ...process.env })
   const server = spawn(process.execPath, [path.join(root, 'dist', 'server', 'index.js')], { ...options, stdio: 'inherit' })
   server.on('error', (err) => {
@@ -123,7 +129,7 @@ function openOffice(office) {
     event.preventDefault()
     win.setTitle(titleOf(office))
   })
-  win.on('closed', () => stopOffice(office.id, false))
+  win.on('closed', () => stopOffice(office.id, false, false))
 
   running.set(office.id, { office, server, win })
   registry.lastId = office.id
@@ -207,8 +213,8 @@ handle('rename', (id, name) => {
   return true
 })
 handle('remove', (id, deleteData) => {
-  stopOffice(id)
   registryLib.removeOffice(app.getPath('userData'), id, { deleteData: deleteData === true })
+  stopOffice(id, true, true)
   reload()
   rebuildMenu()
   return true
@@ -235,17 +241,18 @@ app.whenReady()
   })
   .catch((err) => {
     console.error('[desktop] startup failed:', err)
+    dialog.showErrorBox('OpenGrokBot', err instanceof Error ? err.message : String(err))
     app.quit()
   })
 
 app.on('window-all-closed', () => {
   if (manager && !manager.isDestroyed()) return
   app.isQuitting = true
-  for (const id of [...running.keys()]) stopOffice(id, false)
+  for (const id of [...running.keys()]) stopOffice(id, false, false)
   app.quit()
 })
 
 app.on('before-quit', () => {
   app.isQuitting = true
-  for (const id of [...running.keys()]) stopOffice(id, false)
+  for (const id of [...running.keys()]) stopOffice(id, false, false)
 })

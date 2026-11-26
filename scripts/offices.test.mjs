@@ -118,3 +118,10 @@ test('registro corrompido gera OfficesError', (t) => {
   writeFileSync(path.join(root, 'offices.json'), '{')
   assert.throws(() => offices.loadOffices(root), offices.OfficesError)
 })
+
+test('assertOfficeDir recusa um office cujo diretório desapareceu', async (t) => {
+  const root = makeRoot(t)
+  const office = await offices.createOffice(root, 'Sumido')
+  rmSync(office.dir, { recursive: true, force: true })
+  assert.throws(() => offices.assertOfficeDir(office), offices.OfficesError)
+})
