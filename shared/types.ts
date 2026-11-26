@@ -269,3 +269,12 @@ export type ServerEvent =
   | { type: 'approval:request'; request: ApprovalRequest }
   | { type: 'approval:resolved'; id: string; allowed: boolean }
   | { type: 'routines'; routines: Routine[] }
+
+export interface VersionInfo {
+  current: string
+  latest: string | null
+  upToDate: boolean | null
+  checkedAt: number
+  repoUrl: string
+  downloadUrl: string
+}
