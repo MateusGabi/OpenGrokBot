@@ -1,7 +1,7 @@
 import express from 'express'
 import { spawn } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
-import { copyFileSync, existsSync, mkdirSync, statSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Account } from './account.js'
@@ -15,6 +15,7 @@ import { providerStatuses } from './providers/index.js'
 import { Routines } from './routines.js'
 import { Store } from './store.js'
 import { loadTeam, parseAgent, parseMcpServer, parseProvider, parseSkill, parseTeam, saveTeam, TeamError } from './team.js'
+import { VersionChecker } from './version.js'
 import { summarizeUsage } from './usage.js'
 import type { AppState, Attachment, Team } from '../shared/types.js'
 
@@ -46,6 +47,8 @@ const memory = new Memory(dataDir)
 const orchestrator = new Orchestrator(() => team, store, account, approvals, memory, (p) => allowedFile(p))
 const routines = new Routines(dataDir, (r) => orchestrator.runRoutine(r))
 routines.start()
+const packageVersion = (JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')) as { version: string }).version
+const versionChecker = new VersionChecker(packageVersion)
 
 const app = express()
 app.disable('x-powered-by')
@@ -113,6 +116,10 @@ function allowedFile(p: string): boolean {
 
 app.get('/api/state', (_req, res) => {
   res.json(state())
+})
+
+app.get('/api/version', async (_req, res) => {
+  res.json(await versionChecker.info())
 })
 
 // ---- conversations ----
