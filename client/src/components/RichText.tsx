@@ -141,7 +141,7 @@ function Inline({ text, team }: { text: string; team: Team }) {
 
 function LinkChip({ url }: { url: string }) {
   return (
-    <a className="link-chip" href={url} target="_blank" rel="noopener noreferrer" title="Opens in a new browser tab">
+    <a className="link-chip" href={url} target="_blank" rel="noopener noreferrer" title="Opens in a new browser tab" onClick={(e) => e.stopPropagation()}>
       <ExternalIcon className="link-chip-icon" />
       <span>{url}</span>
     </a>

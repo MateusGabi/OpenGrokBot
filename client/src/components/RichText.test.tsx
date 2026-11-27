@@ -1,13 +1,37 @@
 /// <reference types="node" />
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { createElement } from 'react'
+import { createElement, type ReactElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import type { Team } from '../../../shared/types'
 import { RichText } from './RichText'
 
 const team = { agents: [], owner: { name: 'X' } } as unknown as Team
 const render = (text: string) => renderToStaticMarkup(createElement(RichText, { text, team }))
+
+type Chip = ReactElement<{ className?: string; onClick?: (event: { stopPropagation(): void }) => void }>
+
+/** The renderer's components are pure, so its element tree can be walked without a DOM. */
+function elements(node: ReactNode): ReactNode[] {
+  if (node === null || node === undefined || typeof node === 'boolean') return []
+  if (Array.isArray(node)) return node.flatMap(elements)
+  if (typeof node === 'object' && 'props' in node) {
+    const el = node as ReactElement<{ children?: ReactNode }>
+    if (typeof el.type === 'function') {
+      return elements((el.type as (props: typeof el.props) => ReactNode)(el.props))
+    }
+    return [el, ...elements(el.props.children)]
+  }
+  return [node]
+}
+
+function findChip(node: ReactNode): Chip | null {
+  return (
+    elements(node).find(
+      (el): el is Chip => typeof el === 'object' && el !== null && 'props' in el && (el as Chip).props.className === 'link-chip',
+    ) ?? null
+  )
+}
 
 test('a direct URL becomes an explicit link chip that opens a new tab', () => {
   const html = render('Veja https://example.com/docs')
@@ -53,4 +77,20 @@ test('markdown links and absolute file paths keep their current rendering', () =
 
 test('non-http schemes are not linked', () => {
   assert.doesNotMatch(render('ftp://example.com'), /link-chip/)
+})
+
+test('a URL in a bullet list is still a chip', () => {
+  const html = render('- Veja https://example.com/docs')
+  assert.match(html, /<ul class="chat-list">/)
+  assert.match(html, /class="link-chip"/)
+  assert.match(html, /href="https:\/\/example\.com\/docs"/)
+})
+
+test('clicking a chip does not bubble to a surrounding preview toggle', () => {
+  const chip = findChip(createElement(RichText, { text: 'https://example.com/docs', team }))
+  assert.ok(chip, 'expected a link chip')
+  assert.equal(typeof chip.props.onClick, 'function')
+  let stopped = 0
+  chip.props.onClick?.({ stopPropagation: () => { stopped++ } })
+  assert.equal(stopped, 1)
 })
