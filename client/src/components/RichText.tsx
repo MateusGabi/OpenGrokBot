@@ -9,6 +9,8 @@ import { ExternalIcon } from './ExternalIcon'
 /** Absolute file paths employees produce (Windows or POSIX) become "Open" chips. */
 const FILE_PATH_SOURCE = String.raw`(?:[A-Za-z]:[\\/]|/(?:home|Users|tmp|var|opt|srv)/)[^\x60"'<>|*?\n]+?\.(?:html?|md|txt|json|ts|tsx|js|jsx|css|py|pdf|png|jpe?g|svg|csv|xlsx?|docx?|pptx?|sql|sh|ps1|yml|yaml|toml)(?![\w./\\])`
 const FILE_PATH_EXACT = new RegExp(`^${FILE_PATH_SOURCE}$`, 'i')
+/** Markdown `[label](url)` stays plain text; kept out of the link branch by the inline splitter. */
+const MARKDOWN_LINK_SOURCE = String.raw`\[[^\]\n]+\]\([^\)\n]+\)`
 
 interface RichTextProps {
   text: string
@@ -98,8 +100,7 @@ function Inline({ text, team }: { text: string; team: Team }) {
   ].filter((m) => m.name.length > 0)
   const names = [...new Set(mentionable.map((m) => m.name))].sort((a, b) => b.length - a.length).map(escape)
   const mention = names.length > 0 ? `@(?:${names.join('|')})(?![A-Za-z0-9_])` : null
-  const markdownLink = String.raw`\[[^\]\n]+\]\([^\)\n]+\)`
-  const pattern = new RegExp(`(\`[^\`]+\`|\\*\\*[^*]+\\*\\*|${markdownLink}|${LINK_SOURCE}|${FILE_PATH_SOURCE}${mention ? `|${mention}` : ''})`, 'gi')
+  const pattern = new RegExp(`(\`[^\`]+\`|\\*\\*[^*]+\\*\\*|${MARKDOWN_LINK_SOURCE}|${LINK_SOURCE}|${FILE_PATH_SOURCE}${mention ? `|${mention}` : ''})`, 'gi')
   const tokens = text.split(pattern)
   return (
     <>

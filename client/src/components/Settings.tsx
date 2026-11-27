@@ -672,12 +672,12 @@ function About() {
       <div className="actions about-actions">
         <a className="btn btn-primary" href={info?.downloadUrl ?? DOWNLOAD_URL} target="_blank" rel="noopener noreferrer">
           Download update
-          <ExternalIcon />
+          <ExternalIcon className="about-external" />
           <span className="sr-only">(opens in a new tab)</span>
         </a>
         <a className="btn" href={info?.repoUrl ?? REPO_URL} target="_blank" rel="noopener noreferrer">
           View on GitHub
-          <ExternalIcon />
+          <ExternalIcon className="about-external" />
           <span className="sr-only">(opens in a new tab)</span>
         </a>
       </div>
