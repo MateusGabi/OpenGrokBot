@@ -34,13 +34,28 @@ test('loadOffices cria o entry default a partir do team.json existente', (t) => 
   assert.equal(readFileSync(teamFile, 'utf8'), original)
 })
 
-test('createOffice gera slug sem acentos, team.json, data/ e porta única', async (t) => {
+test('createOffice gera slug, um único Bot e a mensagem de apresentação', async (t) => {
   const root = makeRoot(t)
   const a = await offices.createOffice(root, 'Clientê ACME')
   assert.equal(a.id, 'cliente-acme')
   assert.ok(existsSync(path.join(a.dir, 'team.json')))
   assert.ok(existsSync(path.join(a.dir, 'data')))
   assert.ok(a.port >= 4311)
+
+  const team = JSON.parse(readFileSync(path.join(a.dir, 'team.json'), 'utf8'))
+  assert.equal(team.agents.length, 1)
+  assert.equal(team.agents[0].id, 'bot')
+  assert.equal(team.agents[0].name, 'Bot')
+
+  const groupFile = path.join(a.dir, 'data', 'conversations', 'group.json')
+  assert.ok(existsSync(groupFile))
+  const group = JSON.parse(readFileSync(groupFile, 'utf8'))
+  assert.deepEqual(group.memberIds, ['user', 'bot'])
+  assert.equal(group.messages.length, 1)
+  assert.equal(group.messages[0].authorId, 'bot')
+  assert.equal(group.messages[0].status, 'done')
+  assert.match(group.messages[0].text, /primeiro Employee/i)
+
   const b = await offices.createOffice(root, 'Beta')
   assert.notEqual(b.port, a.port)
 })

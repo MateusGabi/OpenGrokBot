@@ -3,8 +3,10 @@
 const fs = require('node:fs')
 const net = require('node:net')
 const path = require('node:path')
+const { randomUUID } = require('node:crypto')
 
 const INSTALL_ROOT = path.resolve(__dirname, '..')
+const INTRO = 'Olá! Sou o Bot, o primeiro Employee deste office. Ainda não há mais ninguém aqui. Qual deve ser o primeiro Employee a criar e o que ele deve fazer?'
 
 class OfficesError extends Error {}
 
@@ -99,6 +101,59 @@ async function nextPort(registry) {
   return port
 }
 
+function starterTeam(name) {
+  const base = JSON.parse(fs.readFileSync(path.join(INSTALL_ROOT, 'team.example.json'), 'utf8'))
+  const exampleAgents = Array.isArray(base.agents) ? base.agents : []
+  const template = exampleAgents.find((a) => Array.isArray(a.tools) && a.tools.includes('Write')) ?? exampleAgents[0] ?? {}
+  const bot = {
+    ...template,
+    id: 'bot',
+    name: 'Bot',
+    role: 'ASSISTANT',
+    department: 'General',
+    shape: 'blob',
+    color: '#2f7ef5',
+    provider: 'claude',
+    model: 'default',
+    effort: 'medium',
+    tools: ['Read', 'Edit', 'Write', 'Glob', 'Grep', 'Bash'],
+    permissionMode: 'acceptEdits',
+    mcpServers: [],
+    inheritClaudeSettings: false,
+    autoApproveTools: false,
+    muted: false,
+    approvals: 'auto',
+    scope: 'onboarding: help decide which employee to create first and what that employee should do',
+    personality: 'You are Bot, the first employee of a brand new office. You introduce yourself briefly and ask which employee to create next and what that employee should do. Keep replies short and friendly.',
+  }
+  return {
+    company: name,
+    owner: { id: 'user', name: 'You', title: 'CEO' },
+    workspace: '.',
+    agents: [bot],
+    providers: base.providers ?? {},
+    mcpServers: {},
+    skills: {},
+    settings: base.settings ?? {},
+  }
+}
+
+function seedIntro(dataDir) {
+  const conversations = path.join(dataDir, 'conversations')
+  fs.mkdirSync(conversations, { recursive: true })
+  const now = Date.now()
+  const conversation = {
+    id: 'group',
+    kind: 'group',
+    name: 'Team',
+    memberIds: ['user', 'bot'],
+    messages: [{ id: `intro-${randomUUID().slice(0, 8)}`, conversationId: 'group', authorId: 'bot', text: INTRO, createdAt: now, status: 'done' }],
+    sessions: {},
+    createdAt: now,
+  }
+  fs.writeFileSync(path.join(conversations, 'group.json'), JSON.stringify(conversation, null, 2) + '\n')
+}
+
 async function createOffice(stateRoot, name) {
   const human = cleanName(name)
   const registry = loadOffices(stateRoot)
@@ -107,7 +162,8 @@ async function createOffice(stateRoot, name) {
   const dir = path.resolve(stateRoot, 'offices', id)
   if (fs.existsSync(dir)) throw new OfficesError(`offices: ${dir} already exists`)
   fs.mkdirSync(path.join(dir, 'data'), { recursive: true })
-  fs.copyFileSync(path.join(INSTALL_ROOT, 'team.example.json'), path.join(dir, 'team.json'))
+  fs.writeFileSync(path.join(dir, 'team.json'), JSON.stringify(starterTeam(human), null, 2) + '\n')
+  seedIntro(path.join(dir, 'data'))
   const entry = { id, name: human, dir, port: await nextPort(registry), createdAt: Date.now() }
   registry.offices.push(entry)
   saveOffices(stateRoot, registry)

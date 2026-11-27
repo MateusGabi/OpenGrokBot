@@ -195,6 +195,8 @@ offices/<id>/team.json     # that office's company
 offices/<id>/data/         # conversations, memory, uploads, routines
 ```
 
+A new office starts with a single employee named **Bot**. It greets you in the team chat and asks which employee to create first and what that employee should do — no starter team to delete.
+
 `remove` only unregisters an office; use `npm run office -- remove <id> --delete-data` (or the second confirmation in the manager) to delete its files permanently. The old manual way still works too — `PORT=4399 OPENGROKBOT_TEAM=demo-team.json OPENGROKBOT_DATA=demo-data npm start` runs a second office without registering it.
 
 ## Use it from your phone
