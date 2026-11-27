@@ -7,11 +7,11 @@ const { randomUUID } = require('node:crypto')
 
 const INSTALL_ROOT = path.resolve(__dirname, '..')
 const INTRO = [
-  'Olá! Sou o Bot, o primeiro Employee deste office. Ainda não há mais ninguém aqui.',
+  "Hello! I'm Bot, the first Employee of this office. There's no one else here yet.",
   '',
-  'Primeira sugestão: verifique em Settings → Providers se este office já tem um provider e um modelo conectados. Cada office é isolado e não herda as chaves dos outros — se não houver provider ativo, configure um provider (Claude, Codex, Gemini ou um compatível com OpenAI) ou adicione uma API key exclusiva para este office.',
+  'First suggestion: check in Settings → Providers whether this office already has a provider and a model connected. Each office is isolated and does not inherit keys from the others — if no provider is active, configure a provider (Claude, Codex, Gemini, or an OpenAI-compatible one) or add an API key exclusive to this office.',
   '',
-  'Depois disso: qual deve ser o primeiro Employee a criar e o que ele deve fazer?',
+  'After that: which Employee should I create first, and what should that Employee do?',
 ].join('\n')
 
 class OfficesError extends Error {}
