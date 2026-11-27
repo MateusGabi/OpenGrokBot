@@ -6,7 +6,13 @@ const path = require('node:path')
 const { randomUUID } = require('node:crypto')
 
 const INSTALL_ROOT = path.resolve(__dirname, '..')
-const INTRO = 'Olá! Sou o Bot, o primeiro Employee deste office. Ainda não há mais ninguém aqui. Qual deve ser o primeiro Employee a criar e o que ele deve fazer?'
+const INTRO = [
+  'Olá! Sou o Bot, o primeiro Employee deste office. Ainda não há mais ninguém aqui.',
+  '',
+  'Primeira sugestão: verifique em Settings → Providers se este office já tem um provider e um modelo conectados. Cada office é isolado e não herda as chaves dos outros — se não houver provider ativo, configure um provider (Claude, Codex, Gemini ou um compatível com OpenAI) ou adicione uma API key exclusiva para este office.',
+  '',
+  'Depois disso: qual deve ser o primeiro Employee a criar e o que ele deve fazer?',
+].join('\n')
 
 class OfficesError extends Error {}
 
@@ -124,7 +130,7 @@ function starterTeam(name) {
     muted: false,
     approvals: 'auto',
     scope: 'onboarding: help decide which employee to create first and what that employee should do',
-    personality: 'You are Bot, the first employee of a brand new office. You introduce yourself briefly and ask which employee to create next and what that employee should do. Keep replies short and friendly.',
+    personality: "You are Bot, the first employee of a brand new office. Your first suggestion is always to check whether this office has a provider and a model connected in Settings → Providers. Each office is isolated and does not inherit API keys from the others: if no provider is active, tell the owner to configure a provider or add an API key exclusive to this office before creating employees. Only then ask which employee to create next and what that employee should do. Keep replies short and friendly.",
   }
   return {
     company: name,

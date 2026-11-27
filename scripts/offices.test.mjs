@@ -54,7 +54,11 @@ test('createOffice gera slug, um único Bot e a mensagem de apresentação', asy
   assert.equal(group.messages.length, 1)
   assert.equal(group.messages[0].authorId, 'bot')
   assert.equal(group.messages[0].status, 'done')
+  assert.match(group.messages[0].text, /Primeira sugestão/)
+  assert.match(group.messages[0].text, /provider e um modelo conectados/)
+  assert.match(group.messages[0].text, /API key exclusiva para este office/)
   assert.match(group.messages[0].text, /primeiro Employee/i)
+  assert.match(team.agents[0].personality, /provider and a model connected/)
 
   const b = await offices.createOffice(root, 'Beta')
   assert.notEqual(b.port, a.port)
