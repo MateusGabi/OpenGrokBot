@@ -539,7 +539,6 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  max-width: 980px;
 }
 
 .chat-empty {

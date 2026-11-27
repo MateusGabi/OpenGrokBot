@@ -63,7 +63,6 @@
 
 .bubble-wrap {
   min-width: 0;
-  max-width: 88%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
