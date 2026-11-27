@@ -11,7 +11,7 @@
     "build": "tsc -p tsconfig.server.json && vite build",
     "start": "node dist/server/index.js",
     "typecheck": "tsc -p tsconfig.server.json --noEmit && tsc -p tsconfig.client.json --noEmit",
-    "test": "tsc -p tsconfig.server.json && node --test \"dist/server/**/*.test.js\" && node --test \"dist/shared/**/*.test.js\" && node --test \"scripts/*.test.mjs\"",
+    "test": "tsc -p tsconfig.server.json && node --test \"dist/server/**/*.test.js\" && node --test \"dist/shared/**/*.test.js\" && node --test \"scripts/*.test.mjs\" && npx tsx --tsconfig tsconfig.client.json --test \"client/src/components/RichText.test.tsx\"",
     "desktop": "node desktop/launch.cjs",
     "build:desktop": "npm run build && node desktop/build.cjs",
     "gabber": "node scripts/gabber.cjs"

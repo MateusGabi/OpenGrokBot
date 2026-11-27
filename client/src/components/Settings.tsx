@@ -9,6 +9,7 @@ import { formatCost, formatRelative, formatTokens, modelLabel } from '../format'
 import { MARKETPLACE, type MarketplaceItem } from '../marketplace'
 import { conversationTitle, personFor } from '../people'
 import { Avatar } from './Avatar'
+import { ExternalIcon } from './ExternalIcon'
 import { Providers } from './Providers'
 import { Routines } from './Routines'
 import { Skills } from './Skills'
@@ -608,17 +609,6 @@ function AccountSection({ account }: SettingsProps) {
 }
 
 /* ---------- About ---------- */
-
-/** Arrow leaving a box: this control opens a page outside the app. */
-function ExternalIcon() {
-  return (
-    <svg className="about-external" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-      <path d="M15 3h6v6" />
-      <path d="M10 14 21 3" />
-    </svg>
-  )
-}
 
 function About() {
   const [info, setInfo] = useState<VersionInfo | null>(null)
