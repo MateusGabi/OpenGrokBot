@@ -1,12 +1,16 @@
 import type { ReactNode } from 'react'
+import { LINK_SOURCE, linkFromToken } from '../../../shared/links'
 import type { Team } from '../../../shared/types'
 import { openFile } from '../api'
 import { personFor } from '../people'
 import { Avatar } from './Avatar'
+import { ExternalIcon } from './ExternalIcon'
 
 /** Absolute file paths employees produce (Windows or POSIX) become "Open" chips. */
 const FILE_PATH_SOURCE = String.raw`(?:[A-Za-z]:[\\/]|/(?:home|Users|tmp|var|opt|srv)/)[^\x60"'<>|*?\n]+?\.(?:html?|md|txt|json|ts|tsx|js|jsx|css|py|pdf|png|jpe?g|svg|csv|xlsx?|docx?|pptx?|sql|sh|ps1|yml|yaml|toml)(?![\w./\\])`
 const FILE_PATH_EXACT = new RegExp(`^${FILE_PATH_SOURCE}$`, 'i')
+/** Markdown `[label](url)` stays plain text; kept out of the link branch by the inline splitter. */
+const MARKDOWN_LINK_SOURCE = String.raw`\[[^\]\n]+\]\([^\)\n]+\)`
 
 interface RichTextProps {
   text: string
@@ -14,8 +18,8 @@ interface RichTextProps {
 }
 
 /**
- * Minimal chat markdown: fenced code, inline code, bold, bullet lists, file paths as
- * clickable chips, and @NAME mentions rendered as pills with the employee's avatar.
+ * Minimal chat markdown: fenced code, inline code, bold, bullet lists, direct URLs as
+ * link chips, file paths as clickable chips, and @NAME mentions rendered as pills.
  */
 export function RichText({ text, team }: RichTextProps) {
   const parts = text.split(/(```[\s\S]*?```)/g)
@@ -96,7 +100,7 @@ function Inline({ text, team }: { text: string; team: Team }) {
   ].filter((m) => m.name.length > 0)
   const names = [...new Set(mentionable.map((m) => m.name))].sort((a, b) => b.length - a.length).map(escape)
   const mention = names.length > 0 ? `@(?:${names.join('|')})(?![A-Za-z0-9_])` : null
-  const pattern = new RegExp(`(\`[^\`]+\`|\\*\\*[^*]+\\*\\*|${FILE_PATH_SOURCE}${mention ? `|${mention}` : ''})`, 'gi')
+  const pattern = new RegExp(`(\`[^\`]+\`|\\*\\*[^*]+\\*\\*|${MARKDOWN_LINK_SOURCE}|${LINK_SOURCE}|${FILE_PATH_SOURCE}${mention ? `|${mention}` : ''})`, 'gi')
   const tokens = text.split(pattern)
   return (
     <>
@@ -108,6 +112,16 @@ function Inline({ text, team }: { text: string; team: Team }) {
         }
         if (FILE_PATH_EXACT.test(tok)) return <FileChip key={i} path={tok} />
         if (tok.startsWith('**') && tok.endsWith('**')) return <strong key={i}>{tok.slice(2, -2)}</strong>
+        const url = linkFromToken(tok)
+        if (url) {
+          const tail = tok.slice(url.length)
+          return (
+            <span key={i}>
+              <LinkChip url={url} />
+              {tail && <span>{tail}</span>}
+            </span>
+          )
+        }
         if (tok.startsWith('@')) {
           const hit = mentionable.find((m) => m.name.toLowerCase() === tok.slice(1).toLowerCase())
           if (hit) {
@@ -123,6 +137,15 @@ function Inline({ text, team }: { text: string; team: Team }) {
         return <span key={i}>{tok}</span>
       })}
     </>
+  )
+}
+
+function LinkChip({ url }: { url: string }) {
+  return (
+    <a className="link-chip" href={url} target="_blank" rel="noopener noreferrer" title="Opens in a new browser tab" onClick={(e) => e.stopPropagation()}>
+      <ExternalIcon className="link-chip-icon" />
+      <span>{url}</span>
+    </a>
   )
 }
 

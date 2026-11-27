@@ -637,6 +637,48 @@ textarea {
   border-radius: 6px;
 }
 
+/* direct URLs in replies: full address visible, with an opens-outside icon */
+.link-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  color: var(--accent-text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1px 5px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+  vertical-align: baseline;
+  direction: ltr;
+}
+
+.link-chip:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+}
+
+.link-chip-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.link-chip > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (hover: hover) {
+  .link-chip:hover {
+    background: var(--fill-hover);
+    border-color: var(--border-strong);
+  }
+}
+
 .bubble .code-block {
   margin: 6px 0 0;
   padding: 10px 12px;
